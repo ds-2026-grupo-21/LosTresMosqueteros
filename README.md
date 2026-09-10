@@ -10,4 +10,4 @@ Repositorio del Trabajo Práctico Integrador de Desarrollo de Software 2026.
 
 ## Cómo ejecutar
 
-Pendiente de TP03.
+Pendiente de TP04, donde se creará la aplicación y se documentará su ejecución.
