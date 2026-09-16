@@ -471,7 +471,6 @@ tempkey.rsa
 tempkey.jwk
 
 # Secrets and local configuration
-**/appsettings.secrets.json
 .env
 .env.*
 *.pfx
