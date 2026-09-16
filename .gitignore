@@ -430,3 +430,54 @@ FodyWeavers.xsd
 
 # Official VS Code C# Dev Kit Extension exclusion
 #*.lscache
+
+# Reglas adicionales generadas por ABP Studio
+
+# Additional build folders
+x64/
+x86/
+*_i.h
+
+# JustCode
+.JustCode
+
+# JetBrains Rider
+**/.idea/
+*.sln.iml
+
+# ABP Studio
+**/.abpstudio/
+**/*.abppkg.analyze.json
+
+# VS Code workspace
+*.code-workspace
+
+# LosTresMosqueteros logs
+src/LosTresMosqueteros.Web/Logs/*
+src/LosTresMosqueteros.Web.Host/Logs/*
+src/LosTresMosqueteros.Web.Public/Logs/*
+src/LosTresMosqueteros.Web.Public.Host/Logs/*
+src/LosTresMosqueteros.AuthServer/Logs/*
+src/LosTresMosqueteros.HttpApi.Host/Logs/*
+src/LosTresMosqueteros.DbMigrator/Logs/*
+src/LosTresMosqueteros.Blazor.Server/Logs/*
+src/LosTresMosqueteros.Blazor.Server.Tiered/Logs/*
+
+# Use abp install-libs to restore
+**/wwwroot/libs/*
+
+# IdentityServer temporary files
+tempkey.rsa
+tempkey.jwk
+
+# Secrets and local configuration
+**/appsettings.secrets.json
+.env
+.env.*
+*.pfx
+*.p12
+*.pem
+*.key
+*.p8
+**/values.localdev.yaml
+**/tunnel-config.json

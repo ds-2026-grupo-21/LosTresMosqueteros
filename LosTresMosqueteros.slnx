@@ -1,0 +1,23 @@
+<Solution>
+    <Configurations>
+        <Platform Name="Any CPU" />
+    </Configurations>
+    <Folder Name="/src/">
+        <Project Path="src/LosTresMosqueteros.Domain/LosTresMosqueteros.Domain.csproj" />
+        <Project Path="src/LosTresMosqueteros.Application/LosTresMosqueteros.Application.csproj" />
+        <Project Path="src/LosTresMosqueteros.EntityFrameworkCore/LosTresMosqueteros.EntityFrameworkCore.csproj" />
+        <Project Path="src/LosTresMosqueteros.Domain.Shared/LosTresMosqueteros.Domain.Shared.csproj" />
+        <Project Path="src/LosTresMosqueteros.Application.Contracts/LosTresMosqueteros.Application.Contracts.csproj" />
+        <Project Path="src/LosTresMosqueteros.HttpApi/LosTresMosqueteros.HttpApi.csproj" />
+        <Project Path="src/LosTresMosqueteros.HttpApi.Client/LosTresMosqueteros.HttpApi.Client.csproj" />
+        <Project Path="src/LosTresMosqueteros.HttpApi.Host/LosTresMosqueteros.HttpApi.Host.csproj" />
+        <Project Path="src/LosTresMosqueteros.DbMigrator/LosTresMosqueteros.DbMigrator.csproj" />
+    </Folder>
+    <Folder Name="/test/">
+        <Project Path="test/LosTresMosqueteros.Application.Tests/LosTresMosqueteros.Application.Tests.csproj" />
+        <Project Path="test/LosTresMosqueteros.EntityFrameworkCore.Tests/LosTresMosqueteros.EntityFrameworkCore.Tests.csproj" />
+        <Project Path="test/LosTresMosqueteros.TestBase/LosTresMosqueteros.TestBase.csproj" />
+        <Project Path="test/LosTresMosqueteros.Domain.Tests/LosTresMosqueteros.Domain.Tests.csproj" />
+        <Project Path="test/LosTresMosqueteros.HttpApi.Client.ConsoleTestApp/LosTresMosqueteros.HttpApi.Client.ConsoleTestApp.csproj" />
+    </Folder>
+</Solution>
