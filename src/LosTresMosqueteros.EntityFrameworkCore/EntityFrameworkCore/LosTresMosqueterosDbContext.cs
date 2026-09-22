@@ -1,4 +1,5 @@
 using Microsoft.EntityFrameworkCore;
+using LosTresMosqueteros.Productos;
 using Volo.Abp.AuditLogging.EntityFrameworkCore;
 using Volo.Abp.BackgroundJobs.EntityFrameworkCore;
 using Volo.Abp.BlobStoring.Database.EntityFrameworkCore;
@@ -22,7 +23,7 @@ public class LosTresMosqueterosDbContext :
     IIdentityDbContext
 {
     /* Add DbSet properties for your Aggregate Roots / Entities here. */
-
+    public DbSet<Producto> Productos { get; set; }
 
     #region Entities from the modules
 
@@ -72,11 +73,26 @@ public class LosTresMosqueterosDbContext :
 
         /* Configure your own tables/entities inside here */
 
-        //builder.Entity<YourEntity>(b =>
-        //{
-        //    b.ToTable(LosTresMosqueterosConsts.DbTablePrefix + "YourEntities", LosTresMosqueterosConsts.DbSchema);
-        //    b.ConfigureByConvention(); //auto configure for the base class props
-        //    //...
-        //});
+        builder.Entity<Producto>(b =>
+        {
+            b.ToTable(LosTresMosqueterosConsts.DbTablePrefix + "Productos", LosTresMosqueterosConsts.DbSchema);
+            b.ConfigureByConvention(); //auto configure for the base class props
+
+            b.Property(x => x.CodigoBarras)
+                .IsRequired()
+                .HasMaxLength(ProductoConsts.MaxCodigoBarrasLength);
+
+            b.Property(x => x.Nombre)
+                .IsRequired()
+                .HasMaxLength(ProductoConsts.MaxNombreLength);
+
+            b.Property(x => x.Ingredientes)
+                .HasMaxLength(ProductoConsts.MaxIngredientesLength);
+
+            b.Property(x => x.Alergenos)
+                .HasMaxLength(ProductoConsts.MaxAlergenosLength);
+
+            b.HasIndex(x => x.CodigoBarras);
+        });
     }
 }
