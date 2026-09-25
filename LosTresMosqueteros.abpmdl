@@ -1,0 +1,109 @@
+{
+  "template": "app",
+  "imports": {
+    "Volo.Abp.LeptonXLiteTheme": {
+      "version": "5.6.0",
+      "isInstalled": true,
+      "creationTime": "09/14/2026 23:07:10 +00:00"
+    },
+    "Volo.Abp.Account": {
+      "version": "10.6.0",
+      "isInstalled": true,
+      "creationTime": "09/14/2026 23:07:10 +00:00"
+    },
+    "Volo.Abp.OpenIddict": {
+      "version": "10.6.0",
+      "isInstalled": true,
+      "creationTime": "09/14/2026 23:07:10 +00:00"
+    },
+    "Volo.Abp.Identity": {
+      "version": "10.6.0",
+      "isInstalled": true,
+      "creationTime": "09/14/2026 23:07:10 +00:00"
+    },
+    "Volo.Abp.SettingManagement": {
+      "version": "10.6.0",
+      "isInstalled": true,
+      "creationTime": "09/14/2026 23:07:10 +00:00"
+    },
+    "Volo.Abp.PermissionManagement": {
+      "version": "10.6.0",
+      "isInstalled": true,
+      "creationTime": "09/14/2026 23:07:10 +00:00"
+    },
+    "Volo.Abp.FeatureManagement": {
+      "version": "10.6.0",
+      "isInstalled": true,
+      "creationTime": "09/14/2026 23:07:10 +00:00"
+    },
+    "Volo.Abp.BlobStoring.Database": {
+      "version": "10.6.0",
+      "isInstalled": true,
+      "creationTime": "09/14/2026 23:07:10 +00:00"
+    }
+  },
+  "folders": {
+    "items": {
+      "src": {},
+      "test": {}
+    }
+  },
+  "packages": {
+    "LosTresMosqueteros.Application": {
+      "path": "src/LosTresMosqueteros.Application/LosTresMosqueteros.Application.abppkg",
+      "folder": "src"
+    },
+    "LosTresMosqueteros.Application.Tests": {
+      "path": "test/LosTresMosqueteros.Application.Tests/LosTresMosqueteros.Application.Tests.abppkg",
+      "folder": "test"
+    },
+    "LosTresMosqueteros.Domain.Shared": {
+      "path": "src/LosTresMosqueteros.Domain.Shared/LosTresMosqueteros.Domain.Shared.abppkg",
+      "folder": "src"
+    },
+    "LosTresMosqueteros.Application.Contracts": {
+      "path": "src/LosTresMosqueteros.Application.Contracts/LosTresMosqueteros.Application.Contracts.abppkg",
+      "folder": "src"
+    },
+    "LosTresMosqueteros.HttpApi": {
+      "path": "src/LosTresMosqueteros.HttpApi/LosTresMosqueteros.HttpApi.abppkg",
+      "folder": "src"
+    },
+    "LosTresMosqueteros.HttpApi.Client": {
+      "path": "src/LosTresMosqueteros.HttpApi.Client/LosTresMosqueteros.HttpApi.Client.abppkg",
+      "folder": "src"
+    },
+    "LosTresMosqueteros.EntityFrameworkCore.Tests": {
+      "path": "test/LosTresMosqueteros.EntityFrameworkCore.Tests/LosTresMosqueteros.EntityFrameworkCore.Tests.abppkg",
+      "folder": "test"
+    },
+    "LosTresMosqueteros.EntityFrameworkCore": {
+      "path": "src/LosTresMosqueteros.EntityFrameworkCore/LosTresMosqueteros.EntityFrameworkCore.abppkg",
+      "folder": "src"
+    },
+    "LosTresMosqueteros.TestBase": {
+      "path": "test/LosTresMosqueteros.TestBase/LosTresMosqueteros.TestBase.abppkg",
+      "folder": "test"
+    },
+    "LosTresMosqueteros.Domain.Tests": {
+      "path": "test/LosTresMosqueteros.Domain.Tests/LosTresMosqueteros.Domain.Tests.abppkg",
+      "folder": "test"
+    },
+    "LosTresMosqueteros.HttpApi.Client.ConsoleTestApp": {
+      "path": "test/LosTresMosqueteros.HttpApi.Client.ConsoleTestApp/LosTresMosqueteros.HttpApi.Client.ConsoleTestApp.abppkg",
+      "folder": "test"
+    },
+    "LosTresMosqueteros.DbMigrator": {
+      "path": "src/LosTresMosqueteros.DbMigrator/LosTresMosqueteros.DbMigrator.abppkg",
+      "folder": "src"
+    },
+    "LosTresMosqueteros.HttpApi.Host": {
+      "path": "src/LosTresMosqueteros.HttpApi.Host/LosTresMosqueteros.HttpApi.Host.abppkg",
+      "folder": "src"
+    },
+    "LosTresMosqueteros.Domain": {
+      "path": "src/LosTresMosqueteros.Domain/LosTresMosqueteros.Domain.abppkg",
+      "folder": "src"
+    }
+  }
+}
