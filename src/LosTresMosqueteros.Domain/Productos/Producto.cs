@@ -40,4 +40,13 @@ public class Producto : FullAuditedAggregateRoot<Guid>
         Check.NotNullOrWhiteSpace(nombre, nameof(nombre), ProductoConsts.MaxNombreLength);
         Nombre = nombre.Trim();
     }
+    public void SetIngredientes(string? ingredientes)
+    {
+        Ingredientes = ingredientes;
+    }
+
+    public void SetAlergenos(string? alergenos)
+    {
+        Alergenos = alergenos;
+    }
 }
