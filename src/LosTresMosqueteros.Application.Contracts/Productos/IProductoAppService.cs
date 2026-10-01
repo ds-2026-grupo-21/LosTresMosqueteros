@@ -1,11 +1,16 @@
 ﻿using System;
-using System.Threading.Tasks;
+using Volo.Abp.Application.Dtos;
+using Volo.Abp.Application.Services;
 
 namespace LosTresMosqueteros.Productos;
 
-public interface IProductoAppService
+public interface IProductoAppService :
+    ICrudAppService <
+        ProductoDto,
+        ProductoDto,
+        Guid,
+        PagedAndSortedResultRequestDto,
+        CreateProductoDto,
+        CreateProductoDto>
 {
-    Task<ProductoDto> CreateAsync(CreateProductoDto input);
-
-    Task<ProductoDto> GetAsync(Guid id);
 }

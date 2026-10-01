@@ -1,6 +1,7 @@
-﻿using System;
-using LosTresMosqueteros.Productos;
+﻿using LosTresMosqueteros.Productos;
 using Shouldly;
+using System;
+using Volo.Abp.Validation;
 using Xunit;
 
 namespace LosTresMosqueteros.Productos;
@@ -51,4 +52,25 @@ public class ProductoTests
             );
         });
     }
+
+    [Fact]
+    public void Modificacion_valida_normaliza_datos()
+    {
+        var producto = new Producto(Guid.NewGuid(), "7791234567890", "Yerba Original");
+
+        producto.SetNombre("  Yerba Premium  ");
+
+        producto.Nombre.ShouldBe("Yerba Premium");
+    }
+
+    [Fact]
+    public void Modificacion_invalida_no_deja_estado_parcial()
+    {
+        var producto = new Producto(Guid.NewGuid(), "7791234567890", "Yerba Original");
+
+        Should.Throw<ArgumentException>(() => producto.SetNombre("   "));
+
+        producto.Nombre.ShouldBe("Yerba Original");
+    }
+
 }

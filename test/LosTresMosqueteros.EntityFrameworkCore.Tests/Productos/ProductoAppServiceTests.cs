@@ -1,7 +1,10 @@
 ﻿using System;
+using System.Linq;
 using System.Threading.Tasks;
 using LosTresMosqueteros.Productos;
 using Shouldly;
+using Volo.Abp;
+using Volo.Abp.Application.Dtos;
 using Volo.Abp.Validation;
 using Xunit;
 
@@ -47,6 +50,39 @@ public class ProductoAppServiceTests : LosTresMosqueterosApplicationTestBase<Los
         await Should.ThrowAsync<AbpValidationException>(async () =>
         {
             await _productoAppService.CreateAsync(input);
+        });
+    }
+
+    [Fact]
+    public async Task Deberia_Crear_Listar_Modificar_Consultar_Y_Bloquear_Eliminacion()
+    {
+        // Create
+        var creado = await _productoAppService.CreateAsync(new CreateProductoDto
+        {
+            CodigoBarras = "7790000000001",
+            Nombre = "Yerba Original"
+        });
+
+        // Listar
+        var lista = await _productoAppService.GetListAsync(new PagedAndSortedResultRequestDto());
+        lista.Items.ShouldContain(p => p.Id == creado.Id);
+
+        // Modificar
+        var actualizado = await _productoAppService.UpdateAsync(creado.Id, new CreateProductoDto
+        {
+            CodigoBarras = "7790000000001",
+            Nombre = "Yerba Modificada"
+        });
+        actualizado.Nombre.ShouldBe("Yerba Modificada");
+
+        // Consultar
+        var consultado = await _productoAppService.GetAsync(creado.Id);
+        consultado.Nombre.ShouldBe("Yerba Modificada");
+
+        // Eliminar: debe estar bloqueado
+        await Should.ThrowAsync<UserFriendlyException>(async () =>
+        {
+            await _productoAppService.DeleteAsync(creado.Id);
         });
     }
 }
