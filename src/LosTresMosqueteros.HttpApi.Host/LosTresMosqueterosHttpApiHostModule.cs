@@ -16,6 +16,7 @@ using OpenIddict.Server.AspNetCore;
 using LosTresMosqueteros.EntityFrameworkCore;
 using LosTresMosqueteros.MultiTenancy;
 using LosTresMosqueteros.HealthChecks;
+using LosTresMosqueteros.Productos;
 using Microsoft.OpenApi;
 using Volo.Abp;
 using Volo.Abp.Studio;
@@ -90,6 +91,14 @@ public class LosTresMosqueterosHttpApiHostModule : AbpModule
     {
         var configuration = context.Services.GetConfiguration();
         var hostingEnvironment = context.Services.GetHostingEnvironment();
+
+        context.Services.AddHttpClient<IExternalProductCatalogClient, OpenFoodFactsProductCatalogClient>(client =>
+        {
+            client.BaseAddress = new Uri("https://world.openfoodfacts.org/api/v3/");
+            client.Timeout = TimeSpan.FromSeconds(15);
+            client.DefaultRequestHeaders.UserAgent.ParseAdd(
+                "LosTresMosqueteros/1.0 (https://github.com/ds-2026-grupo-21/LosTresMosqueteros)");
+        });
 
         if (!configuration.GetValue<bool>("App:DisablePII"))
         {
