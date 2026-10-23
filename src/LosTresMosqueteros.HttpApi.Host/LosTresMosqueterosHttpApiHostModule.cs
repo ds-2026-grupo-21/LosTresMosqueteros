@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Security.Cryptography.X509Certificates;
+using System.Threading.Tasks;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Cors;
@@ -17,8 +18,10 @@ using LosTresMosqueteros.EntityFrameworkCore;
 using LosTresMosqueteros.MultiTenancy;
 using LosTresMosqueteros.HealthChecks;
 using LosTresMosqueteros.Productos;
+using LosTresMosqueteros.Pantry;
 using Microsoft.OpenApi;
 using Volo.Abp;
+using Volo.Abp.BackgroundWorkers;
 using Volo.Abp.Studio;
 using Volo.Abp.Account;
 using Volo.Abp.Account.Web;
@@ -48,6 +51,7 @@ namespace LosTresMosqueteros;
     typeof(AbpStudioClientAspNetCoreModule),
     typeof(AbpAspNetCoreMvcUiLeptonXLiteThemeModule),
     typeof(AbpAutofacModule),
+    typeof(AbpBackgroundWorkersModule),
     typeof(AbpAspNetCoreMultiTenancyModule),
     typeof(LosTresMosqueterosApplicationModule),
     typeof(LosTresMosqueterosEntityFrameworkCoreModule),
@@ -263,7 +267,7 @@ public class LosTresMosqueterosHttpApiHostModule : AbpModule
     }
 
 
-    public override void OnApplicationInitialization(ApplicationInitializationContext context)
+    public override async Task OnApplicationInitializationAsync(ApplicationInitializationContext context)
     {
         var app = context.GetApplicationBuilder();
         var env = context.GetEnvironment();
@@ -310,5 +314,6 @@ public class LosTresMosqueterosHttpApiHostModule : AbpModule
         app.UseAuditing();
         app.UseAbpSerilogEnrichers();
         app.UseConfiguredEndpoints();
+        await context.AddBackgroundWorkerAsync<ExpirationWarningWorker>();
     }
 }
