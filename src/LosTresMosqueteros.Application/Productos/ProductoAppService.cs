@@ -1,23 +1,22 @@
 ﻿using System;
 using System.Threading.Tasks;
+using Microsoft.AspNetCore.Authorization;
+using Volo.Abp;
+using Volo.Abp.Application.Dtos;
 using Volo.Abp.Application.Services;
 using Volo.Abp.Domain.Repositories;
-using Volo.Abp.ObjectMapping;
-using Microsoft.AspNetCore.Authorization;
 
 namespace LosTresMosqueteros.Productos;
 
 [AllowAnonymous]
-public class ProductoAppService : ApplicationService, IProductoAppService
+public class ProductoAppService : CrudAppService<Producto, ProductoDto, ProductoDto, Guid, PagedAndSortedResultRequestDto, CreateProductoDto, CreateProductoDto>, IProductoAppService
 {
-    private readonly IRepository<Producto, Guid> _productoRepository;
-
-    public ProductoAppService(IRepository<Producto, Guid> productoRepository)
+    public ProductoAppService(IRepository<Producto, Guid> repository)
+        : base(repository)
     {
-        _productoRepository = productoRepository;
     }
 
-    public async Task<ProductoDto> CreateAsync(CreateProductoDto input)
+    public override async Task<ProductoDto> CreateAsync(CreateProductoDto input)
     {
         var producto = new Producto(
             GuidGenerator.Create(),
@@ -27,15 +26,29 @@ public class ProductoAppService : ApplicationService, IProductoAppService
             input.Alergenos
         );
 
-        await _productoRepository.InsertAsync(producto);
+        await Repository.InsertAsync(producto);
 
-        return ObjectMapper.Map<Producto, ProductoDto>(producto);
+        return await MapToGetOutputDtoAsync(producto);
     }
 
-    public async Task<ProductoDto> GetAsync(Guid id)
+    public override async Task<ProductoDto> UpdateAsync(Guid id, CreateProductoDto input)
     {
-        var producto = await _productoRepository.GetAsync(id);
+        var producto = await Repository.GetAsync(id);
 
-        return ObjectMapper.Map<Producto, ProductoDto>(producto);
+        producto.SetCodigoBarras(input.CodigoBarras);
+        producto.SetNombre(input.Nombre);
+        producto.SetIngredientes(input.Ingredientes);
+        producto.SetAlergenos(input.Alergenos);
+
+        await Repository.UpdateAsync(producto);
+
+        return await MapToGetOutputDtoAsync(producto);
+    }
+
+    public override Task DeleteAsync(Guid id)
+    {
+        throw new UserFriendlyException(
+            "No se permite eliminar productos: la operacion no es coherente con este modelo."
+        );
     }
 }
