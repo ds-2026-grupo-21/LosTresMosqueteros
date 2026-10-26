@@ -8,7 +8,7 @@ using Volo.Abp.Domain.Repositories;
 
 namespace LosTresMosqueteros.Productos;
 
-[AllowAnonymous]
+[Authorize]
 public class ProductoAppService : CrudAppService<Producto, ProductoDto, ProductoDto, Guid, PagedAndSortedResultRequestDto, CreateProductoDto, CreateProductoDto>, IProductoAppService
 {
     public ProductoAppService(IRepository<Producto, Guid> repository)
