@@ -1,8 +1,10 @@
 ﻿using System.Threading.Tasks;
+using Microsoft.AspNetCore.Authorization;
 using Volo.Abp.Application.Services;
 
 namespace LosTresMosqueteros.Productos;
 
+[Authorize]
 public class ConsultaProductoExternoAppService : ApplicationService, IConsultaProductoExternoAppService
 {
     private readonly IExternalProductCatalogClient _catalogClient;
