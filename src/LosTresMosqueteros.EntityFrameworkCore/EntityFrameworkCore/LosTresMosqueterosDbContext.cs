@@ -1,5 +1,6 @@
-using Microsoft.EntityFrameworkCore;
+using LosTresMosqueteros.Pantry;
 using LosTresMosqueteros.Productos;
+using Microsoft.EntityFrameworkCore;
 using Volo.Abp.AuditLogging.EntityFrameworkCore;
 using Volo.Abp.BackgroundJobs.EntityFrameworkCore;
 using Volo.Abp.BlobStoring.Database.EntityFrameworkCore;
@@ -10,10 +11,9 @@ using Volo.Abp.EntityFrameworkCore.Modeling;
 using Volo.Abp.FeatureManagement.EntityFrameworkCore;
 using Volo.Abp.Identity;
 using Volo.Abp.Identity.EntityFrameworkCore;
+using Volo.Abp.OpenIddict.EntityFrameworkCore;
 using Volo.Abp.PermissionManagement.EntityFrameworkCore;
 using Volo.Abp.SettingManagement.EntityFrameworkCore;
-using Volo.Abp.OpenIddict.EntityFrameworkCore;
-
 namespace LosTresMosqueteros.EntityFrameworkCore;
 
 [ReplaceDbContext(typeof(IIdentityDbContext))]
@@ -24,6 +24,8 @@ public class LosTresMosqueterosDbContext :
 {
     /* Add DbSet properties for your Aggregate Roots / Entities here. */
     public DbSet<Producto> Productos { get; set; }
+    public DbSet<PantryItem> PantryItems { get; set; }
+    public DbSet<ExpirationWarning> ExpirationWarnings { get; set; }
 
     #region Entities from the modules
 
@@ -93,6 +95,33 @@ public class LosTresMosqueterosDbContext :
                 .HasMaxLength(ProductoConsts.MaxAlergenosLength);
 
             b.HasIndex(x => x.CodigoBarras);
+        });
+
+        builder.Entity<PantryItem>(b =>
+        {
+            b.ToTable(LosTresMosqueterosConsts.DbTablePrefix + "PantryItems", LosTresMosqueterosConsts.DbSchema);
+            b.ConfigureByConvention();
+
+            b.Property(x => x.OwnerId).IsRequired();
+            b.Property(x => x.ProductId).IsRequired();
+            b.Property(x => x.Status).IsRequired();
+
+            b.HasIndex(x => x.OwnerId);
+        });
+
+        builder.Entity<ExpirationWarning>(b =>
+        {
+            b.ToTable(LosTresMosqueterosConsts.DbTablePrefix + "ExpirationWarnings", LosTresMosqueterosConsts.DbSchema);
+            b.ConfigureByConvention();
+
+            b.Property(x => x.PantryItemId).IsRequired();
+            b.Property(x => x.Type).IsRequired();
+            b.Property(x => x.ExpirationDate).IsRequired();
+            b.Property(x => x.DaysRemaining).IsRequired();
+            b.Property(x => x.IsActive).IsRequired();
+
+            // Clave lógica: una sola advertencia por ítem y tipo
+            b.HasIndex(x => new { x.PantryItemId, x.Type }).IsUnique();
         });
     }
 }
