@@ -105,6 +105,8 @@ public class LosTresMosqueterosDbContext :
             b.Property(x => x.OwnerId).IsRequired();
             b.Property(x => x.ProductId).IsRequired();
             b.Property(x => x.Status).IsRequired();
+            b.Property(x => x.Quantity).HasPrecision(18, 2);
+            b.Property(x => x.Unit).HasMaxLength(50);
 
             b.HasIndex(x => x.OwnerId);
         });
