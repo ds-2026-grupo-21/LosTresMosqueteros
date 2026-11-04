@@ -47,6 +47,14 @@ El servicio requiere autenticación; obtiene el propietario de la sesión y resp
 
 Los ítems consumidos se conservan en el listado con estado `Consumed` como historial hasta que el usuario los elimine explícitamente. Al eliminar un ítem se eliminan sus advertencias asociadas. El worker utiliza la fecha UTC y un umbral de tres días.
 
+La relación entre advertencias e ítems impide guardar una advertencia para un ítem inexistente y elimina las advertencias asociadas al eliminarlo. Después de actualizar la rama se debe ejecutar DbMigrator. Si una base ya contiene advertencias sin ítem, es necesario revisarlas antes de aplicar esta migración.
+
 ## Mi despensa: listado Angular (TP10)
 
 La ruta `/pantry` requiere una sesión iniciada y se accede desde el menú **Mi despensa**. El listado usa `PantryService` y `ListService` para consultar y paginar; presenta los estados de carga, error con reintento, lista vacía y resultados. Las fechas se muestran según el idioma de la aplicación. El listado muestra los valores ausentes como «No disponible» y distingue los ítems consumidos.
+
+La fecha de vencimiento es una fecha sin hora (`DateOnly`); la pantalla muestra esa misma fecha con el formato regional y no calcula los días restantes. El worker compara la fecha de vencimiento con el día actual en UTC, por lo que el día de referencia puede diferir del día local cerca de la medianoche.
+
+El listado usa `skipHandleError` porque muestra su propio mensaje de error localizado y ofrece reintentar; así se evita duplicar el aviso predeterminado de ABP.
+
+Si no hay conexión durante el inicio de la aplicación, se muestra un mensaje localizado con la opción de reintentar. Una vez iniciada, se conserva el manejo habitual de errores de ABP.

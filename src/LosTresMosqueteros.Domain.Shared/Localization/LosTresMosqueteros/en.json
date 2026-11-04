@@ -6,6 +6,7 @@
     "Pantry:Title": "My pantry",
     "Pantry:Loading": "Loading your pantry...",
     "Pantry:Error": "We could not load your pantry. Please try again.",
+    "Pantry:StartupError": "We could not start the application. Please try again.",
     "Pantry:Retry": "Retry",
     "Pantry:Empty": "Your pantry does not have any products yet.",
     "Pantry:Unavailable": "Not available",

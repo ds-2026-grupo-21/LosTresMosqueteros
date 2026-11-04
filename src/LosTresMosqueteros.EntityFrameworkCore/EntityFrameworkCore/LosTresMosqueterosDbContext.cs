@@ -122,6 +122,11 @@ public class LosTresMosqueterosDbContext :
             b.Property(x => x.DaysRemaining).IsRequired();
             b.Property(x => x.IsActive).IsRequired();
 
+            b.HasOne<PantryItem>()
+                .WithMany()
+                .HasForeignKey(x => x.PantryItemId)
+                .OnDelete(DeleteBehavior.Cascade);
+
             // Clave lógica: una sola advertencia por ítem y tipo
             b.HasIndex(x => new { x.PantryItemId, x.Type }).IsUnique();
         });

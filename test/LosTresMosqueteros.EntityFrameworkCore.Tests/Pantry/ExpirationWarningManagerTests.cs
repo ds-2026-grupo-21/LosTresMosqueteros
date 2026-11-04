@@ -238,6 +238,31 @@ public class ExpirationWarningManagerTests
             Arg.Any<CancellationToken>());
     }
 
+    [Fact]
+    public async Task Deberia_Omitir_Item_Eliminado_Entre_La_Lectura_Y_La_Advertencia()
+    {
+        var id = await CreateItemAsync(TodayUtc.AddDays(1));
+        var warnings = Substitute.For<IRepository<ExpirationWarning, Guid>>();
+        warnings.FindAsync(Arg.Any<Expression<Func<ExpirationWarning, bool>>>(), false, Arg.Any<CancellationToken>())
+            .Returns(call => _warnings.FindAsync(
+                call.ArgAt<Expression<Func<ExpirationWarning, bool>>>(0), false,
+                call.ArgAt<CancellationToken>(2)));
+        warnings.InsertAsync(Arg.Any<ExpirationWarning>(), false, Arg.Any<CancellationToken>())
+            .Returns(async call =>
+            {
+                using var unitOfWork = GetRequiredService<IUnitOfWorkManager>().Begin(requiresNew: true, isTransactional: false);
+                await _items.DeleteAsync(id, autoSave: true);
+                await unitOfWork.CompleteAsync();
+                return await _warnings.InsertAsync(call.ArgAt<ExpirationWarning>(0), false,
+                    call.ArgAt<CancellationToken>(2));
+            });
+
+        await CreateManager(warnings).ProcessAsync(TodayUtc);
+
+        (await ReadWarningsAsync(id)).ShouldBeEmpty();
+        await warnings.Received(1).InsertAsync(Arg.Any<ExpirationWarning>(), false, Arg.Any<CancellationToken>());
+    }
+
     private ExpirationWarningManager CreateManager(IRepository<ExpirationWarning, Guid> warnings)
     {
         return new ExpirationWarningManager(_items, warnings, GetRequiredService<IUnitOfWorkManager>())

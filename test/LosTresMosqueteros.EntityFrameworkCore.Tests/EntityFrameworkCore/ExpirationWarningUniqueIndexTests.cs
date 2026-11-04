@@ -13,10 +13,12 @@ public class ExpirationWarningUniqueIndexTests
     : LosTresMosqueterosApplicationTestBase<LosTresMosqueterosEntityFrameworkCoreTestModule>
 {
     private readonly IRepository<ExpirationWarning, Guid> _warnings;
+    private readonly IRepository<PantryItem, Guid> _items;
 
     public ExpirationWarningUniqueIndexTests()
     {
         _warnings = GetRequiredService<IRepository<ExpirationWarning, Guid>>();
+        _items = GetRequiredService<IRepository<PantryItem, Guid>>();
     }
 
     [Fact]
@@ -24,6 +26,8 @@ public class ExpirationWarningUniqueIndexTests
     {
         var itemId = Guid.NewGuid();
         var fecha = new DateOnly(2026, 10, 15);
+
+        await CreateItemAsync(itemId, fecha);
 
         await WithUnitOfWorkAsync(async () =>
         {
@@ -57,6 +61,9 @@ public class ExpirationWarningUniqueIndexTests
         var item1 = Guid.NewGuid();
         var item2 = Guid.NewGuid();
 
+        await CreateItemAsync(item1, fecha);
+        await CreateItemAsync(item2, fecha);
+
         await WithUnitOfWorkAsync(async () =>
         {
             await _warnings.InsertAsync(new ExpirationWarning(Guid.NewGuid(), item1, fecha, 1), autoSave: true);
@@ -68,4 +75,33 @@ public class ExpirationWarningUniqueIndexTests
 
         cantidad.ShouldBe(2);
     }
+
+    [Fact]
+    public async Task No_Debe_Crear_Advertencia_Para_Un_Item_Eliminado()
+    {
+        var itemId = Guid.NewGuid();
+        var fecha = new DateOnly(2026, 10, 15);
+        await CreateItemAsync(itemId, fecha);
+        await WithUnitOfWorkAsync(() => _items.DeleteAsync(itemId, autoSave: true));
+
+        await Should.ThrowAsync<DbUpdateException>(() => WithUnitOfWorkAsync(() =>
+            _warnings.InsertAsync(new ExpirationWarning(Guid.NewGuid(), itemId, fecha, 1), autoSave: true)));
+    }
+
+    [Fact]
+    public async Task Eliminar_Item_Debe_Eliminar_Sus_Advertencias()
+    {
+        var itemId = Guid.NewGuid();
+        var fecha = new DateOnly(2026, 10, 15);
+        await CreateItemAsync(itemId, fecha);
+        await WithUnitOfWorkAsync(() => _warnings.InsertAsync(
+            new ExpirationWarning(Guid.NewGuid(), itemId, fecha, 1), autoSave: true));
+
+        await WithUnitOfWorkAsync(() => _items.DeleteAsync(itemId, autoSave: true));
+
+        (await WithUnitOfWorkAsync(() => _warnings.GetListAsync(x => x.PantryItemId == itemId))).ShouldBeEmpty();
+    }
+
+    private Task CreateItemAsync(Guid itemId, DateOnly fecha) => WithUnitOfWorkAsync(() =>
+        _items.InsertAsync(new PantryItem(itemId, Guid.NewGuid(), Guid.NewGuid(), fecha), autoSave: true));
 }

@@ -2077,6 +2077,15 @@ namespace LosTresMosqueteros.Migrations
                     b.ToTable("AbpSettingDefinitions", (string)null);
                 });
 
+            modelBuilder.Entity("LosTresMosqueteros.Pantry.ExpirationWarning", b =>
+                {
+                    b.HasOne("LosTresMosqueteros.Pantry.PantryItem", null)
+                        .WithMany()
+                        .HasForeignKey("PantryItemId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+                });
+
             modelBuilder.Entity("Volo.Abp.AuditLogging.AuditLogAction", b =>
                 {
                     b.HasOne("Volo.Abp.AuditLogging.AuditLog", null)

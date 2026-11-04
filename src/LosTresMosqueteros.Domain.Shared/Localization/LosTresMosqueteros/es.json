@@ -6,6 +6,7 @@
     "Pantry:Title": "Mi despensa",
     "Pantry:Loading": "Cargando tu despensa...",
     "Pantry:Error": "No pudimos cargar tu despensa. Intentá nuevamente.",
+    "Pantry:StartupError": "No pudimos iniciar la aplicación. Intentá nuevamente.",
     "Pantry:Retry": "Reintentar",
     "Pantry:Empty": "Tu despensa todavía no tiene productos.",
     "Pantry:Unavailable": "No disponible",
