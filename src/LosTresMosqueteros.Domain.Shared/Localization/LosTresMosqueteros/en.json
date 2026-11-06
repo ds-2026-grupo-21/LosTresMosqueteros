@@ -24,6 +24,8 @@
 "Pantry:Cancel": "Cancel",
 "Pantry:Save": "Save",
 "Pantry:QuantityInvalid": "Enter a quantity of zero or more.",
+"Pantry:QuantityTooLarge": "The quantity is too large.",
+"Pantry:QuantityDecimals": "The quantity can have at most two decimals.",
 "Pantry:UnitTooLong": "The unit must be 50 characters or fewer.",
 "Pantry:DateInvalid": "Enter a valid expiration date.",
 "Pantry:ServerValidationError": "Some values were rejected. Review them and try again.",

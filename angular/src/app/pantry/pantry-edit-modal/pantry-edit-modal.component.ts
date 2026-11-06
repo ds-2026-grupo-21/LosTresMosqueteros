@@ -6,8 +6,9 @@ import { AbstractControl, FormBuilder, ReactiveFormsModule, ValidationErrors, Va
 import { finalize } from 'rxjs';
 import { PantryItemDto, PantryService, UpdatePantryItemDto } from '@proxy/pantry';
 
-// Debe coincidir con la longitud máxima que valida el servidor (ver DTO de C#).
+// Deben coincidir con las reglas de UpdatePantryItemDto en el servidor.
 export const UNIT_MAX_LENGTH = 50;
+export const QUANTITY_MAX = 9999999999999999.99;
 
 function validDate(control: AbstractControl): ValidationErrors | null {
   const value = control.value as string | null;
@@ -15,6 +16,14 @@ function validDate(control: AbstractControl): ValidationErrors | null {
   const isFormatOk = /^\d{4}-\d{2}-\d{2}$/.test(value);
   const isRealDate = !Number.isNaN(new Date(`${value}T00:00:00`).getTime());
   return isFormatOk && isRealDate ? null : { invalidDate: true };
+}
+
+function maxTwoDecimals(control: AbstractControl): ValidationErrors | null {
+  const value = control.value as number | null;
+  if (value === null || value === undefined) return null;
+  // toFixed evita falsos errores de coma flotante (por ejemplo 0.07 * 100).
+  const scaled = Number((value * 100).toFixed(6));
+  return Number.isInteger(scaled) ? null : { decimals: true };
 }
 
 @Component({
@@ -38,8 +47,16 @@ function validDate(control: AbstractControl): ValidationErrors | null {
           <div class="mb-3">
             <label class="form-label" for="quantity">{{ '::Pantry:Quantity' | abpLocalization }}</label>
             <input id="quantity" type="number" step="any" min="0" class="form-control" formControlName="quantity" />
-            @if (form.controls.quantity.touched && form.controls.quantity.errors) {
-              <div class="text-danger small">{{ '::Pantry:QuantityInvalid' | abpLocalization }}</div>
+            @if (form.controls.quantity.touched) {
+              @if (form.controls.quantity.hasError('min')) {
+                <div class="text-danger small">{{ '::Pantry:QuantityInvalid' | abpLocalization }}</div>
+              }
+              @if (form.controls.quantity.hasError('max')) {
+                <div class="text-danger small">{{ '::Pantry:QuantityTooLarge' | abpLocalization }}</div>
+              }
+              @if (form.controls.quantity.hasError('decimals')) {
+                <div class="text-danger small">{{ '::Pantry:QuantityDecimals' | abpLocalization }}</div>
+              }
             }
           </div>
 
@@ -84,7 +101,11 @@ export class PantryEditModalComponent implements OnInit {
   readonly serverError = signal<string | null>(null);
 
   readonly form = this.fb.group({
-    quantity: this.fb.control<number | null>(null, [Validators.min(0)]),
+    quantity: this.fb.control<number | null>(null, [
+      Validators.min(0),
+      Validators.max(QUANTITY_MAX),
+      maxTwoDecimals,
+    ]),
     unit: this.fb.control<string | null>(null, [Validators.maxLength(UNIT_MAX_LENGTH)]),
     expirationDate: this.fb.control<string | null>(null, [validDate]),
   });

@@ -4,7 +4,7 @@ import { ReactiveFormsModule } from '@angular/forms';
 import { PantryItemDto, PantryService } from '@proxy/pantry';
 import { of } from 'rxjs';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { PantryEditModalComponent, UNIT_MAX_LENGTH } from './pantry-edit-modal.component';
+import { PantryEditModalComponent, QUANTITY_MAX, UNIT_MAX_LENGTH } from './pantry-edit-modal.component';
 
 @Pipe({ name: 'abpLocalization' })
 class TestLocalizationPipe implements PipeTransform {
@@ -45,6 +45,25 @@ describe('PantryEditModalComponent', () => {
     component.form.patchValue({ quantity: -1 });
     component.save();
     expect(component.form.controls.quantity.errors).toBeTruthy();
+    expect(update).not.toHaveBeenCalled();
+  });
+
+  it('rechaza una cantidad con más de dos decimales sin llamar al servidor', () => {
+    component.form.patchValue({ quantity: 1.234 });
+    component.save();
+    expect(component.form.controls.quantity.hasError('decimals')).toBe(true);
+    expect(update).not.toHaveBeenCalled();
+  });
+
+  it('acepta una cantidad con dos decimales', () => {
+    component.form.patchValue({ quantity: 0.07 });
+    expect(component.form.controls.quantity.valid).toBe(true);
+  });
+
+  it('rechaza una cantidad por encima del máximo sin llamar al servidor', () => {
+    component.form.patchValue({ quantity: QUANTITY_MAX * 10 });
+    component.save();
+    expect(component.form.controls.quantity.hasError('max')).toBe(true);
     expect(update).not.toHaveBeenCalled();
   });
 
