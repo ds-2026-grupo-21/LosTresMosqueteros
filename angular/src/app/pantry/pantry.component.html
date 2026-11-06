@@ -1,6 +1,20 @@
 <section class="pantry" aria-labelledby="pantry-title">
   <h1 id="pantry-title">{{ '::Pantry:Title' | abpLocalization }}</h1>
 
+  @if (actionError()) {
+    <div class="alert alert-danger" role="alert">
+      {{ actionError()! | abpLocalization }}
+    </div>
+  }
+
+  @if (editingItem(); as itemToEdit) {
+    <app-pantry-edit-modal
+      [item]="itemToEdit"
+      (saved)="onEditSaved()"
+      (closed)="closeEdit()"
+    />
+  }
+
   @if (state() === 'loading') {
     <p role="status">{{ '::Pantry:Loading' | abpLocalization }}</p>
   } @else if (state() === 'error') {
@@ -17,22 +31,91 @@
       @for (item of items(); track item.id) {
         <li class="pantry-item card">
           <div class="card-body">
-            <h2 class="product-name">{{ item.productName || ('::Pantry:Unavailable' | abpLocalization) }}</h2>
+            <h2 class="product-name">
+              {{ item.productName || ('::Pantry:Unavailable' | abpLocalization) }}
+            </h2>
+
             @if (item.status === consumed) {
-              <span class="badge text-bg-secondary">{{ '::Pantry:Consumed' | abpLocalization }}</span>
+              <span class="badge text-bg-secondary">
+                {{ '::Pantry:Consumed' | abpLocalization }}
+              </span>
             }
+
             <dl class="item-details">
-              <div><dt>{{ '::Pantry:Quantity' | abpLocalization }}</dt><dd>{{ item.quantity ?? ('::Pantry:Unavailable' | abpLocalization) }}</dd></div>
-              <div><dt>{{ '::Pantry:Unit' | abpLocalization }}</dt><dd>{{ item.unit || ('::Pantry:Unavailable' | abpLocalization) }}</dd></div>
-              <div><dt>{{ '::Pantry:ExpirationDate' | abpLocalization }}</dt><dd>{{ item.expirationDate ? (item.expirationDate | shortDate) : ('::Pantry:Unavailable' | abpLocalization) }}</dd></div>
+              <div>
+                <dt>{{ '::Pantry:Quantity' | abpLocalization }}</dt>
+                <dd>{{ item.quantity ?? ('::Pantry:Unavailable' | abpLocalization) }}</dd>
+              </div>
+              <div>
+                <dt>{{ '::Pantry:Unit' | abpLocalization }}</dt>
+                <dd>{{ item.unit || ('::Pantry:Unavailable' | abpLocalization) }}</dd>
+              </div>
+              <div>
+                <dt>{{ '::Pantry:ExpirationDate' | abpLocalization }}</dt>
+                <dd>
+                  {{ item.expirationDate
+                    ? (item.expirationDate | shortDate)
+                    : ('::Pantry:Unavailable' | abpLocalization) }}
+                </dd>
+              </div>
             </dl>
+
+            <div class="pantry-actions">
+              <button
+                type="button"
+                class="btn btn-outline-primary"
+                [disabled]="actionBusyId() !== null"
+                (click)="edit(item)"
+              >
+                {{ '::Pantry:Edit' | abpLocalization }}
+              </button>
+
+              @if (item.status !== consumed) {
+                <button
+                  type="button"
+                  class="btn btn-outline-success"
+                  [disabled]="actionBusyId() !== null"
+                  (click)="markConsumed(item)"
+                >
+                  {{ '::Pantry:MarkConsumed' | abpLocalization }}
+                </button>
+              }
+
+              <button
+                type="button"
+                class="btn btn-outline-danger"
+                [disabled]="actionBusyId() !== null"
+                (click)="delete(item)"
+              >
+                {{ '::Pantry:Delete' | abpLocalization }}
+              </button>
+            </div>
           </div>
         </li>
       }
     </ul>
-    <nav class="pagination-controls" [attr.aria-label]="'::Pantry:Pagination' | abpLocalization">
-      <button type="button" class="btn btn-outline-primary" [disabled]="list.page === 0" (click)="previous()">{{ '::Pantry:Previous' | abpLocalization }}</button>
-      <button type="button" class="btn btn-outline-primary" [disabled]="(list.page + 1) * list.maxResultCount >= totalCount()" (click)="next()">{{ '::Pantry:Next' | abpLocalization }}</button>
+
+    <nav
+      class="pagination-controls"
+      [attr.aria-label]="'::Pantry:Pagination' | abpLocalization"
+    >
+      <button
+        type="button"
+        class="btn btn-outline-primary"
+        [disabled]="list.page === 0"
+        (click)="previous()"
+      >
+        {{ '::Pantry:Previous' | abpLocalization }}
+      </button>
+
+      <button
+        type="button"
+        class="btn btn-outline-primary"
+        [disabled]="(list.page + 1) * list.maxResultCount >= totalCount()"
+        (click)="next()"
+      >
+        {{ '::Pantry:Next' | abpLocalization }}
+      </button>
     </nav>
   }
 </section>
