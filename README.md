@@ -100,8 +100,5 @@ Los textos usan claves con prefijo `Pantry:` en `en.json` y `es.json` (proyecto 
 ### Pruebas
 
 - Componente (Vitest): `cd angular && yarn test`. 24 pruebas que cubren los estados de carga, error, vacío y resultados, la edición con datos inválidos, la confirmación previa de eliminación y la cancelación sin llamada al servicio.
-- BackEnd: Test Explorer en Visual Studio. <img width="872" height="873" alt="Captura de pantalla 2026-11-06 173351" src="https://github.com/user-attachments/assets/b7c4a04c-2155-4662-a136-e79b8e4fa0d1" />
-<img width="515" height="496" alt="Captura de pantalla 2026-11-06 173323" src="https://github.com/user-attachments/assets/d7eb34db-5a10-4e66-a4a0-1ce87241992a" />
-<img width="935" height="882" alt="Captura de pantalla 2026-11-06 173314" src="https://github.com/user-attachments/assets/4295d9bb-91d3-471a-bc5d-a1ce43ae5f1b" />
-<img width="957" height="1020" alt="Captura de pantalla 2026-11-06 190604" src="https://github.com/user-attachments/assets/489467f3-d9b8-4c2f-91f9-9a864ffef1f7" />
-<img width="968" height="1005" alt="Captura de pantalla 2026-11-06 190423" src="https://github.com/user-attachments/assets/498e54ca-5d55-4c44-88da-8cfbdf45488c" />
+- BackEnd: Test Explorer en Visual Studio. <img width="827" height="727" alt="image" src="https://github.com/user-attachments/assets/ef4f15c3-1486-4e06-8570-f51f246e0ddc" />
+
