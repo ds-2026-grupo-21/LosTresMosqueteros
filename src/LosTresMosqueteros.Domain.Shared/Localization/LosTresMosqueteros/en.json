@@ -24,7 +24,7 @@
 "Pantry:Cancel": "Cancel",
 "Pantry:Save": "Save",
 "Pantry:QuantityInvalid": "Enter a quantity of zero or more.",
-"Pantry:UnitTooLong": "The unit must be 20 characters or fewer.",
+"Pantry:UnitTooLong": "The unit must be 50 characters or fewer.",
 "Pantry:DateInvalid": "Enter a valid expiration date.",
 "Pantry:ServerValidationError": "Some values were rejected. Review them and try again.",
 "Pantry:SaveError": "We could not save your changes. Please try again.",

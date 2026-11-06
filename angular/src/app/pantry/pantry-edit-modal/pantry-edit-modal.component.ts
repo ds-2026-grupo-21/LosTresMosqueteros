@@ -7,7 +7,7 @@ import { finalize } from 'rxjs';
 import { PantryItemDto, PantryService, UpdatePantryItemDto } from '@proxy/pantry';
 
 // Debe coincidir con la longitud máxima que valida el servidor (ver DTO de C#).
-export const UNIT_MAX_LENGTH = 20;
+export const UNIT_MAX_LENGTH = 50;
 
 function validDate(control: AbstractControl): ValidationErrors | null {
   const value = control.value as string | null;
