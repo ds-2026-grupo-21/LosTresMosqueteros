@@ -35,7 +35,8 @@ Configuración utilizada para SQL Server Express:
 ```json
 "ConnectionStrings": {
   "Default": "Server=localhost\\SQLEXPRESS;Database=LosTresMosqueteros;Trusted_Connection=True;TrustServerCertificate=True"
-}```
+}
+```
 
 ## Despensa: contrato del backend (TP10)
 
@@ -58,3 +59,49 @@ La fecha de vencimiento es una fecha sin hora (`DateOnly`); la pantalla muestra 
 El listado usa `skipHandleError` porque muestra su propio mensaje de error localizado y ofrece reintentar; así se evita duplicar el aviso predeterminado de ABP.
 
 Si no hay conexión durante el inicio de la aplicación, se muestra un mensaje localizado con la opción de reintentar. Una vez iniciada, se conserva el manejo habitual de errores de ABP.
+
+## Mi despensa: edición, consumo y eliminación (TP10)
+
+### Correspondencia con el BackEnd y el proxy
+
+| Operación de la pantalla | Método del proxy (`PantryService`) | Endpoint |
+|---|---|---|
+| Listar ítems propios (paginado) | `getList` | `GET /api/app/pantry` |
+| Editar cantidad, unidad y vencimiento | `update` | `PUT /api/app/pantry/{id}` |
+| Marcar como consumido | `markConsumed` | `POST /api/app/pantry/{id}/mark-consumed` |
+| Eliminar | `delete` | `DELETE /api/app/pantry/{id}` |
+
+La interfaz no reemplaza la autorización del servidor: ocultar o deshabilitar botones es solo usabilidad.
+
+Componentes: `PantryComponent` (lista, consumo y eliminación) y `PantryEditModalComponent` (formulario reactivo de edición). Los proxies están en `angular/src/app/proxy` y se generan con `abp generate-proxy -t ng`; no se editan a mano.
+
+### Ítems consumidos
+
+Se conservan como historial, visibles con la etiqueta "Consumido". El botón "Marcar como consumido" se oculta en ellos. Para quitarlos, el usuario los elimina de forma explícita, con confirmación previa. Después de editar, consumir o eliminar se recarga la página actual con `getWithoutPageReset`.
+
+### Manejo de errores
+
+- **Edición:** `skipHandleError: true`. El error se muestra dentro del modal, sin cerrarlo y sin perder lo ingresado. Un 400 muestra "el servidor rechazó algunos valores"; otro error muestra un mensaje genérico de guardado.
+- **Consumo y eliminación:** `skipHandleError: true`. Se muestra un aviso localizado sobre la lista.
+- No se muestran códigos de estado ni detalles técnicos al usuario.
+
+### Validaciones
+
+El formulario repite las reglas del servidor (`UpdatePantryItemDto`): cantidad entre 0 y un máximo, hasta dos decimales, y unidad de hasta 50 caracteres. El servidor es quien decide. El tope máximo de la interfaz es aproximado, porque un número de JavaScript no representa exactamente 9999999999999999.99.
+
+### Acceso a ítems ajenos
+
+Un ítem de otro usuario responde 404 en todas las operaciones, igual que uno inexistente.
+
+### Localización
+
+Los textos usan claves con prefijo `Pantry:` en `en.json` y `es.json` (proyecto `Domain.Shared`). Después de modificarlas hay que reiniciar el host, porque Angular toma las traducciones del servidor.
+
+### Pruebas
+
+- Componente (Vitest): `cd angular && yarn test`. 24 pruebas que cubren los estados de carga, error, vacío y resultados, la edición con datos inválidos, la confirmación previa de eliminación y la cancelación sin llamada al servicio.
+- BackEnd: Test Explorer en Visual Studio. <img width="872" height="873" alt="Captura de pantalla 2026-11-06 173351" src="https://github.com/user-attachments/assets/b7c4a04c-2155-4662-a136-e79b8e4fa0d1" />
+<img width="515" height="496" alt="Captura de pantalla 2026-11-06 173323" src="https://github.com/user-attachments/assets/d7eb34db-5a10-4e66-a4a0-1ce87241992a" />
+<img width="935" height="882" alt="Captura de pantalla 2026-11-06 173314" src="https://github.com/user-attachments/assets/4295d9bb-91d3-471a-bc5d-a1ce43ae5f1b" />
+<img width="957" height="1020" alt="Captura de pantalla 2026-11-06 190604" src="https://github.com/user-attachments/assets/489467f3-d9b8-4c2f-91f9-9a864ffef1f7" />
+<img width="968" height="1005" alt="Captura de pantalla 2026-11-06 190423" src="https://github.com/user-attachments/assets/498e54ca-5d55-4c44-88da-8cfbdf45488c" />
