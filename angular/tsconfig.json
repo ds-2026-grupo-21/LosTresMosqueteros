@@ -8,12 +8,13 @@
     "esModuleInterop": true,
     "experimentalDecorators": true,
     "moduleResolution": "bundler",
+    "resolveJsonModule": true,
     "importHelpers": true,
     "skipLibCheck": true,
     "target": "ES2022",
     "module": "ES2022",
     "lib": ["ES2022", "dom", "esnext.disposable"],
-    "paths": {},
+    "paths": { "@proxy/*": ["./src/app/proxy/*"] },
     "useDefineForClassFields": false
   },
   "angularCompilerOptions": {

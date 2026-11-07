@@ -1,0 +1,21 @@
+import type { ConsultarProductoExternoDto, ExternalProductDto } from './models';
+import { RestService, Rest } from '@abp/ng.core';
+import { Injectable, inject } from '@angular/core';
+
+@Injectable({
+  providedIn: 'root',
+})
+export class ConsultaProductoExternoService {
+  private restService = inject(RestService);
+  apiName = 'Default';
+
+
+  get = (input: ConsultarProductoExternoDto, config?: Partial<Rest.Config>) =>
+    this.restService.request<any, ExternalProductDto>({
+      method: 'GET',
+      headers: { Accept: 'application/json' },
+      url: '/api/app/consulta-producto-externo',
+      params: { codigoBarras: input.codigoBarras },
+    },
+    { apiName: this.apiName,...config });
+}
