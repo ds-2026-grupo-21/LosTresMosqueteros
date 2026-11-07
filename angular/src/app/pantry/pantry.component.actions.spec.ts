@@ -52,6 +52,37 @@ describe('PantryComponent acciones', () => {
   afterEach(() => TestBed.resetTestingModule());
 
   describe('eliminación', () => {
+    it('vuelve a la página anterior al eliminar el último ítem de la página', () => {
+      let deleted = false;
+      const lastItem: PantryItemDto = { id: 'last', productName: 'Leche', status: PantryItemStatus.Active };
+      getList = vi.fn((query: { skipCount: number }) => of({
+        totalCount: deleted ? 10 : 11,
+        items: query.skipCount > 0 ? (deleted ? [] : [lastItem]) : [activeItem],
+      } as PagedResultDto<PantryItemDto>));
+      del = vi.fn(() => { deleted = true; return of(undefined); });
+      warn = vi.fn(() => of(Confirmation.Status.confirm));
+      TestBed.configureTestingModule({
+        imports: [PantryComponent],
+        providers: [
+          { provide: PantryService, useValue: { getList, delete: del } },
+          { provide: ConfirmationService, useValue: { warn } },
+          { provide: LIST_QUERY_DEBOUNCE_TIME, useValue: 0 },
+        ],
+      });
+      TestBed.overrideComponent(PantryComponent, {
+        set: { imports: [TestLocalizationPipe, TestShortDatePipe], schemas: [CUSTOM_ELEMENTS_SCHEMA] },
+      });
+      fixture = TestBed.createComponent(PantryComponent);
+      component = fixture.componentInstance;
+      fixture.detectChanges();
+      component.next();
+      component.delete(lastItem);
+      fixture.detectChanges();
+      expect(component.list.page).toBe(0);
+      expect(component.items()).toEqual([activeItem]);
+      expect(fixture.nativeElement.textContent).not.toContain('::Pantry:Empty');
+    });
+
     it('pide confirmación antes de eliminar', () => {
       setup(Confirmation.Status.confirm);
       component.delete(activeItem);

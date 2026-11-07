@@ -87,7 +87,7 @@ Se conservan como historial, visibles con la etiqueta "Consumido". El botón "Ma
 
 ### Validaciones
 
-El formulario repite las reglas del servidor (`UpdatePantryItemDto`): cantidad entre 0 y un máximo, hasta dos decimales, y unidad de hasta 50 caracteres. El servidor es quien decide. El tope máximo de la interfaz es aproximado, porque un número de JavaScript no representa exactamente 9999999999999999.99.
+El formulario valida cantidad no negativa con hasta dos decimales y unidad de hasta 50 caracteres. Para evitar pérdida de precisión en JavaScript, la interfaz limita la cantidad a 999.999.999.999,99; el servidor conserva su propio límite y sus validaciones.
 
 ### Acceso a ítems ajenos
 

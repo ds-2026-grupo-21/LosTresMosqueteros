@@ -23,7 +23,7 @@
 "Pantry:DeleteConfirmation": "¿Querés eliminar este producto de tu despensa?",
 "Pantry:Cancel": "Cancelar",
 "Pantry:Save": "Guardar",
-"Pantry:QuantityTooLarge": "La cantidad es demasiado grande.",
+"Pantry:QuantityTooLarge": "La cantidad máxima es 999.999.999.999,99.",
 "Pantry:QuantityDecimals": "La cantidad puede tener como máximo dos decimales.",
 "Pantry:QuantityInvalid": "Ingresá una cantidad igual o mayor que cero.",
 "Pantry:UnitTooLong": "La unidad debe tener 50 caracteres o menos.",

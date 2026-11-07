@@ -6,24 +6,29 @@ import { AbstractControl, FormBuilder, ReactiveFormsModule, ValidationErrors, Va
 import { finalize } from 'rxjs';
 import { PantryItemDto, PantryService, UpdatePantryItemDto } from '@proxy/pantry';
 
-// Deben coincidir con las reglas de UpdatePantryItemDto en el servidor.
+// El límite de la interfaz evita perder precisión al serializar números de JavaScript.
 export const UNIT_MAX_LENGTH = 50;
-export const QUANTITY_MAX = 9999999999999999.99;
+export const QUANTITY_MAX = 999999999999.99;
 
 function validDate(control: AbstractControl): ValidationErrors | null {
   const value = control.value as string | null;
   if (!value) return null;
-  const isFormatOk = /^\d{4}-\d{2}-\d{2}$/.test(value);
-  const isRealDate = !Number.isNaN(new Date(`${value}T00:00:00`).getTime());
-  return isFormatOk && isRealDate ? null : { invalidDate: true };
+  const parts = /^(\d{4})-(\d{2})-(\d{2})$/.exec(value);
+  if (!parts) return { invalidDate: true };
+  const [, yearText, monthText, dayText] = parts;
+  const year = Number(yearText), month = Number(monthText), day = Number(dayText);
+  const date = new Date(0);
+  date.setUTCFullYear(year, month - 1, day);
+  return year > 0 && date.getUTCFullYear() === year && date.getUTCMonth() === month - 1 && date.getUTCDate() === day
+    ? null : { invalidDate: true };
 }
 
 function maxTwoDecimals(control: AbstractControl): ValidationErrors | null {
   const value = control.value as number | null;
   if (value === null || value === undefined) return null;
-  // toFixed evita falsos errores de coma flotante (por ejemplo 0.07 * 100).
-  const scaled = Number((value * 100).toFixed(6));
-  return Number.isInteger(scaled) ? null : { decimals: true };
+  const [mantissa, exponentText = '0'] = value.toString().toLowerCase().split('e');
+  const decimalPlaces = (mantissa.split('.')[1]?.length ?? 0) - Number(exponentText);
+  return decimalPlaces <= 2 ? null : { decimals: true };
 }
 
 @Component({
@@ -37,7 +42,7 @@ function maxTwoDecimals(control: AbstractControl): ValidationErrors | null {
       </ng-template>
 
       <ng-template #abpBody>
-        <p class="fw-bold">{{ item().productName }}</p>
+        <p class="fw-bold">{{ item().productName || ('::Pantry:Unavailable' | abpLocalization) }}</p>
 
         @if (serverError()) {
           <div class="alert alert-danger" role="alert">{{ serverError()! | abpLocalization }}</div>

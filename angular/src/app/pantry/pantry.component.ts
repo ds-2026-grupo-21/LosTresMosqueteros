@@ -41,8 +41,14 @@ export class PantryComponent {
         }),
       );
     }).pipe(takeUntilDestroyed(this.destroyRef)).subscribe(result => {
+      const total = result.totalCount ?? 0;
+      const lastPage = Math.max(0, Math.ceil(total / this.list.maxResultCount) - 1);
+      if ((result.items?.length ?? 0) === 0 && this.list.page > lastPage) {
+        this.list.page = lastPage;
+        return;
+      }
       this.items.set(result.items ?? []);
-      this.totalCount.set(result.totalCount ?? 0);
+      this.totalCount.set(total);
       this.state.set('success');
     });
   }
