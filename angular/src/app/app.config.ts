@@ -1,4 +1,4 @@
-import { provideAbpCore, withOptions } from '@abp/ng.core';
+import { APP_INIT_ERROR_HANDLERS, HttpErrorReporterService, provideAbpCore, withOptions } from '@abp/ng.core';
 import { provideAbpOAuth } from '@abp/ng.oauth';
 import { provideSettingManagementConfig } from '@abp/ng.setting-management/config';
 import { provideFeatureManagementConfig } from '@abp/ng.feature-management';
@@ -16,6 +16,7 @@ import { environment } from '../environments/environment';
 import { APP_ROUTES } from './app.routes';
 import { APP_ROUTE_PROVIDER } from './route.provider';
 import { FOOTER_PROVIDER } from './footer/footer.config';
+import { showStartupError, StartupErrorReporter } from './startup-error';
 
 export const appConfig: ApplicationConfig = {
   providers: [
@@ -23,6 +24,12 @@ export const appConfig: ApplicationConfig = {
     APP_ROUTE_PROVIDER,
     FOOTER_PROVIDER,
     provideAnimations(),
+    { provide: HttpErrorReporterService, useClass: StartupErrorReporter },
+    {
+      provide: APP_INIT_ERROR_HANDLERS,
+      multi: true,
+      useValue: () => showStartupError(document, () => window.location.reload()),
+    },
     provideAbpCore(
       withOptions({
         environment,

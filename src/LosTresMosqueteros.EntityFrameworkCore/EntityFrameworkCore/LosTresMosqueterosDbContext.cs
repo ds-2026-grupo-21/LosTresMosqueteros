@@ -105,6 +105,8 @@ public class LosTresMosqueterosDbContext :
             b.Property(x => x.OwnerId).IsRequired();
             b.Property(x => x.ProductId).IsRequired();
             b.Property(x => x.Status).IsRequired();
+            b.Property(x => x.Quantity).HasPrecision(18, 2);
+            b.Property(x => x.Unit).HasMaxLength(50);
 
             b.HasIndex(x => x.OwnerId);
         });
@@ -119,6 +121,11 @@ public class LosTresMosqueterosDbContext :
             b.Property(x => x.ExpirationDate).IsRequired();
             b.Property(x => x.DaysRemaining).IsRequired();
             b.Property(x => x.IsActive).IsRequired();
+
+            b.HasOne<PantryItem>()
+                .WithMany()
+                .HasForeignKey(x => x.PantryItemId)
+                .OnDelete(DeleteBehavior.Cascade);
 
             // Clave lógica: una sola advertencia por ítem y tipo
             b.HasIndex(x => new { x.PantryItemId, x.Type }).IsUnique();

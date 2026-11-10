@@ -1,0 +1,26 @@
+.pantry { max-width: 64rem; margin: 0 auto; padding: 1rem; }
+.pantry h1 { margin-bottom: 1.5rem; }
+.pantry-list { display: grid; gap: 1rem; padding: 0; list-style: none; }
+.pantry-item { min-width: 0; }
+.product-name { font-size: 1.15rem; overflow-wrap: anywhere; }
+.item-details { display: grid; grid-template-columns: repeat(auto-fit, minmax(9rem, 1fr)); gap: .75rem; margin: 1rem 0 0; }
+.item-details dt { color: var(--bs-secondary-color); font-weight: 500; }
+.item-details dd { margin: .25rem 0 0; overflow-wrap: anywhere; }
+.pagination-controls { display: flex; gap: .5rem; margin-top: 1rem; }
+.pantry .alert { margin-bottom: 1rem; }
+.pantry-item .badge { display: inline-block; margin-bottom: .5rem; }
+.pantry-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: .5rem;
+  margin-top: 1rem;
+  padding-top: 1rem;
+  border-top: 1px solid var(--bs-border-color);
+}
+.pagination-controls { justify-content: space-between; }
+
+@media (max-width: 576px) {
+  .pantry { padding: .5rem; }
+  .pantry-actions .btn { flex: 1 1 100%; }
+  .pagination-controls .btn { flex: 1 1 0; }
+}
