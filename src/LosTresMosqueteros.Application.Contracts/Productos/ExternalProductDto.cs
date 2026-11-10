@@ -1,4 +1,6 @@
-﻿namespace LosTresMosqueteros.Productos;
+﻿using System.Collections.Generic;
+
+namespace LosTresMosqueteros.Productos;
 
 public enum ResultadoConsultaExterna
 {
@@ -15,4 +17,9 @@ public class ExternalProductDto
     public string? Nombre { get; set; }
     public string? Marca { get; set; }
     public string? ImagenUrl { get; set; }
+    public string? Categorias { get; set; }
+    public string? Ingredientes { get; set; }
+    public List<string>? Alergenos { get; set; }
+    public string? NutriScore { get; set; }
+    public int? GrupoNova { get; set; }
 }

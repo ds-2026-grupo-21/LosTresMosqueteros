@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RunSettings>
+  <DataCollectionRunSettings>
+    <DataCollectors>
+      <DataCollector friendlyName="Code Coverage">
+        <Configuration>
+          <Format>Cobertura</Format>
+          <IncludeTestAssembly>false</IncludeTestAssembly>
+          <CodeCoverage>
+            <ModulePaths>
+              <Include>
+                <ModulePath>.*LosTresMosqueteros\.(Domain|Application)\.dll$</ModulePath>
+              </Include>
+            </ModulePaths>
+            <Sources>
+              <Exclude>
+                <Source>.*[\\/]obj[\\/].*</Source>
+                <Source>.*[\\/]Properties[\\/].*</Source>
+                <Source>.*[\\/](Data|OpenIddict|Settings|Identity)[\\/].*</Source>
+                <Source>.*[\\/]LosTresMosqueteros(ApplicationModule|DomainModule|ApplicationMappers|Consts)\.cs$</Source>
+              </Exclude>
+            </Sources>
+          </CodeCoverage>
+        </Configuration>
+      </DataCollector>
+    </DataCollectors>
+  </DataCollectionRunSettings>
+</RunSettings>
