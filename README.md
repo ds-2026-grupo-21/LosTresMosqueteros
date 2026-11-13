@@ -1,5 +1,12 @@
 # LosTresMosqueteros
 
+## TP11: catálogo, guardado y preferencias
+
+El [Issue #30](https://github.com/ds-2026-grupo-21/LosTresMosqueteros/issues/30) reúne las tres partes. La ruta Angular `/preferences` permite administrar preferencias y una foto opcional; el perfil de nombre y correo se edita con ABP en `/account/manage`. Catálogo y guardado se verifican por API en este incremento.
+
+La [guía del TP11](docs/TP11-Integracion.md) incluye endpoints, migraciones, decisiones y comprobaciones. Para iniciar el entorno, ejecutar `dotnet run` desde `src/LosTresMosqueteros.DbMigrator`, luego desde `src/LosTresMosqueteros.HttpApi.Host` y finalmente `yarn start` desde `angular`. DbMigrator usa la configuración de su directorio; revisar la conexión de desarrollo antes de ejecutarlo.
+
+
 Repositorio del Trabajo Práctico Integrador de Desarrollo de Software 2026.
 
 ## Integrantes

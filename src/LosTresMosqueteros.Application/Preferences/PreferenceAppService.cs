@@ -35,12 +35,12 @@ public class PreferenceAppService : LosTresMosqueterosAppService, IPreferenceApp
         {
             // El propietario sale siempre de la sesión, nunca del cliente.
             preference = new UserPreference(GuidGenerator.Create(), CurrentUser.GetId());
-            preference.Update(input.ShowAlerts, input.WatchedItems, GuidGenerator);
+            preference.Update(input.ShowAlerts, input.WatchedItems, GuidGenerator, input.PhotoDataUrl);
             await _repository.InsertAsync(preference, autoSave: true);
         }
         else
         {
-            preference.Update(input.ShowAlerts, input.WatchedItems, GuidGenerator);
+            preference.Update(input.ShowAlerts, input.WatchedItems, GuidGenerator, input.PhotoDataUrl);
             await _repository.UpdateAsync(preference, autoSave: true);
         }
 
@@ -57,6 +57,7 @@ public class PreferenceAppService : LosTresMosqueterosAppService, IPreferenceApp
     private static UserPreferenceDto MapToDto(UserPreference preference) => new()
     {
         ShowAlerts = preference.ShowAlerts,
+        PhotoDataUrl = preference.PhotoDataUrl,
         WatchedItems = preference.WatchedItems.Select(x => x.Name).OrderBy(x => x).ToList()
     };
 }

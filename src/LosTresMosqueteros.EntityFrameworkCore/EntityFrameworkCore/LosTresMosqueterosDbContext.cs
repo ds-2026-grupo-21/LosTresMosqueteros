@@ -88,16 +88,15 @@ public class LosTresMosqueterosDbContext :
                 .HasMaxLength(ProductoConsts.MaxCodigoBarrasLength);
 
             b.Property(x => x.Nombre)
-                .IsRequired()
-                .HasMaxLength(ProductoConsts.MaxNombreLength);
+                .IsRequired(false);
 
             b.Property(x => x.Ingredientes)
-                .HasMaxLength(ProductoConsts.MaxIngredientesLength);
+                .IsRequired(false);
 
             b.Property(x => x.Alergenos)
-                .HasMaxLength(ProductoConsts.MaxAlergenosLength);
+                .IsRequired(false);
 
-            b.HasIndex(x => x.CodigoBarras);
+            b.HasIndex(x => x.CodigoBarras).IsUnique();
         });
 
         builder.Entity<PantryItem>(b =>

@@ -9,7 +9,7 @@ import { Injectable, inject } from '@angular/core';
 export class PantryService {
   private restService = inject(RestService);
   apiName = 'Default';
-  
+
 
   create = (input: CreatePantryItemDto, config?: Partial<Rest.Config>) =>
     this.restService.request<any, PantryItemDto>({
@@ -19,7 +19,7 @@ export class PantryService {
       body: input,
     },
     { apiName: this.apiName,...config });
-  
+
 
   delete = (id: string, config?: Partial<Rest.Config>) =>
     this.restService.request<any, void>({
@@ -27,7 +27,7 @@ export class PantryService {
       url: `/api/app/pantry/${id}`,
     },
     { apiName: this.apiName,...config });
-  
+
 
   get = (id: string, config?: Partial<Rest.Config>) =>
     this.restService.request<any, PantryItemDto>({
@@ -36,7 +36,7 @@ export class PantryService {
       url: `/api/app/pantry/${id}`,
     },
     { apiName: this.apiName,...config });
-  
+
 
   getList = (input: PagedResultRequestDto, config?: Partial<Rest.Config>) =>
     this.restService.request<any, PagedResultDto<PantryItemDto>>({
@@ -46,7 +46,7 @@ export class PantryService {
       params: { skipCount: input.skipCount, maxResultCount: input.maxResultCount },
     },
     { apiName: this.apiName,...config });
-  
+
 
   markConsumed = (id: string, config?: Partial<Rest.Config>) =>
     this.restService.request<any, void>({
@@ -54,7 +54,7 @@ export class PantryService {
       url: `/api/app/pantry/${id}/mark-consumed`,
     },
     { apiName: this.apiName,...config });
-  
+
 
   update = (id: string, input: UpdatePantryItemDto, config?: Partial<Rest.Config>) =>
     this.restService.request<any, PantryItemDto>({

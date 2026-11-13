@@ -10,6 +10,7 @@ public class UserPreference : AuditedAggregateRoot<Guid>
 {
     public Guid UserId { get; private set; }
     public bool ShowAlerts { get; private set; }
+    public string? PhotoDataUrl { get; private set; }
     public ICollection<WatchedItem> WatchedItems { get; private set; } = new List<WatchedItem>();
 
     protected UserPreference()
@@ -23,8 +24,9 @@ public class UserPreference : AuditedAggregateRoot<Guid>
         ShowAlerts = true; // valor inicial acordado
     }
 
-    public void Update(bool showAlerts, IEnumerable<string?> names, IGuidGenerator guidGenerator)
+    public void Update(bool showAlerts, IEnumerable<string?> names, IGuidGenerator guidGenerator, string? photoDataUrl = null)
     {
+        if (!PreferencePhoto.IsValid(photoDataUrl)) throw new ArgumentException("La foto debe ser PNG o JPEG de hasta 80 kB.");
         var wanted = new Dictionary<string, string>(); // normalizado -> nombre a mostrar
 
         foreach (var raw in names)
@@ -53,6 +55,7 @@ public class UserPreference : AuditedAggregateRoot<Guid>
         }
 
         ShowAlerts = showAlerts;
+        PhotoDataUrl = photoDataUrl;
 
         // Se actualiza por diferencia (no se borra todo y se reinserta) para no chocar con el índice único.
         foreach (var existing in WatchedItems.Where(x => !wanted.ContainsKey(x.NormalizedName)).ToList())

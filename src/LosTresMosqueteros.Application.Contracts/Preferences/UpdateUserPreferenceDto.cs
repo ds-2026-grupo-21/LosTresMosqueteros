@@ -6,11 +6,14 @@ namespace LosTresMosqueteros.Preferences;
 public class UpdateUserPreferenceDto : IValidatableObject
 {
     public bool ShowAlerts { get; set; }
+    public string? PhotoDataUrl { get; set; }
 
     public List<string?> WatchedItems { get; set; } = new();
 
     public IEnumerable<ValidationResult> Validate(ValidationContext validationContext)
     {
+        if (!PreferencePhoto.IsValid(PhotoDataUrl))
+            yield return new ValidationResult("La foto debe ser PNG o JPEG de hasta 80 kB.", new[] { nameof(PhotoDataUrl) });
         if (WatchedItems == null)
         {
             yield return new ValidationResult(

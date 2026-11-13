@@ -8,7 +8,7 @@ import { Injectable, inject } from '@angular/core';
 export class PreferenceService {
   private restService = inject(RestService);
   apiName = 'Default';
-  
+
 
   get = (config?: Partial<Rest.Config>) =>
     this.restService.request<any, UserPreferenceDto>({
@@ -17,7 +17,7 @@ export class PreferenceService {
       url: '/api/app/preference',
     },
     { apiName: this.apiName,...config });
-  
+
 
   update = (input: UpdateUserPreferenceDto, config?: Partial<Rest.Config>) =>
     this.restService.request<any, UserPreferenceDto>({

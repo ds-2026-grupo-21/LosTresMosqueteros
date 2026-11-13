@@ -161,6 +161,9 @@ namespace LosTresMosqueteros.Migrations
                         .HasColumnType("uniqueidentifier")
                         .HasColumnName("LastModifierId");
 
+                    b.Property<string>("PhotoDataUrl")
+                        .HasColumnType("nvarchar(max)");
+
                     b.Property<bool>("ShowAlerts")
                         .HasColumnType("bit");
 
@@ -207,8 +210,10 @@ namespace LosTresMosqueteros.Migrations
                         .HasColumnType("uniqueidentifier");
 
                     b.Property<string>("Alergenos")
-                        .HasMaxLength(256)
-                        .HasColumnType("nvarchar(256)");
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("Categorias")
+                        .HasColumnType("nvarchar(max)");
 
                     b.Property<string>("CodigoBarras")
                         .IsRequired()
@@ -243,9 +248,14 @@ namespace LosTresMosqueteros.Migrations
                         .HasColumnType("nvarchar(max)")
                         .HasColumnName("ExtraProperties");
 
+                    b.Property<int?>("GrupoNova")
+                        .HasColumnType("int");
+
+                    b.Property<string>("ImagenUrl")
+                        .HasColumnType("nvarchar(max)");
+
                     b.Property<string>("Ingredientes")
-                        .HasMaxLength(1024)
-                        .HasColumnType("nvarchar(1024)");
+                        .HasColumnType("nvarchar(max)");
 
                     b.Property<bool>("IsDeleted")
                         .ValueGeneratedOnAdd()
@@ -261,14 +271,19 @@ namespace LosTresMosqueteros.Migrations
                         .HasColumnType("uniqueidentifier")
                         .HasColumnName("LastModifierId");
 
+                    b.Property<string>("Marca")
+                        .HasColumnType("nvarchar(max)");
+
                     b.Property<string>("Nombre")
-                        .IsRequired()
-                        .HasMaxLength(128)
-                        .HasColumnType("nvarchar(128)");
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("NutriScore")
+                        .HasColumnType("nvarchar(max)");
 
                     b.HasKey("Id");
 
-                    b.HasIndex("CodigoBarras");
+                    b.HasIndex("CodigoBarras")
+                        .IsUnique();
 
                     b.ToTable("AppProductos", (string)null);
                 });

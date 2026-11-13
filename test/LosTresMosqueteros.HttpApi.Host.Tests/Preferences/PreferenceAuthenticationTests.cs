@@ -26,7 +26,7 @@ public class PreferenceAuthenticationTests
     }
 
     [Fact]
-    public async Task Una_peticion_sin_sesion_al_endpoint_de_preferencias_devuelve_401()
+    public async Task Rutas_de_prueba_protegidas_con_cookie_devuelven_401_sin_sesion()
     {
         var builder = WebApplication.CreateBuilder();
         builder.WebHost.UseUrls("http://127.0.0.1:0");

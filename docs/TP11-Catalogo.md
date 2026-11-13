@@ -1,5 +1,7 @@
 # TP11 — Parte 1: catálogo externo
 
+Este documento describe la parte de catálogo. La integración con guardado y preferencias se detalla en [TP11-Integracion.md](TP11-Integracion.md).
+
 Implementación de la parte 1 (RF-05 a RF-07 y RF-09), vinculada al [Issue #30](https://github.com/ds-2026-grupo-21/LosTresMosqueteros/issues/30). Agregamos búsqueda por texto y ampliamos el detalle. Verificamos la API real y el recorrido autenticado en Swagger. La revisión del equipo y el CI del PR siguen pendientes.
 
 ## Contratos y capas
