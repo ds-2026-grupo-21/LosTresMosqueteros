@@ -2,6 +2,7 @@ using System;
 using System.Net;
 using System.Net.Http;
 using System.Text;
+using System.Text.Json;
 using System.Threading;
 using System.Threading.Tasks;
 using Shouldly;
@@ -22,7 +23,12 @@ public class OpenFoodFactsProductCatalogClientTests
                     "code": "3017620422003",
                     "product_name": "Nutella",
                     "brands": "Ferrero",
-                    "image_front_url": "https://example.com/nutella.jpg"
+                    "image_front_url": "https://example.com/nutella.jpg",
+                    "categories": "Productos para untar",
+                    "ingredients_text": "Azúcar, leche, avellanas",
+                    "allergens_tags": ["en:milk", "en:nuts"],
+                    "nutriscore_grade": "E",
+                    "nova_group": "4"
                 }
             }
             """));
@@ -34,7 +40,7 @@ public class OpenFoodFactsProductCatalogClientTests
         handler.Metodo.ShouldBe(HttpMethod.Get);
         handler.UrlConsultada.ShouldNotBeNull();
         handler.UrlConsultada.AbsoluteUri.ShouldBe(
-            "https://world.openfoodfacts.org/api/v3/product/3017620422003?fields=code,product_name,brands,image_front_url");
+            "https://world.openfoodfacts.org/api/v3/product/3017620422003?fields=code,product_name,brands,image_front_url,categories,ingredients_text,allergens_tags,nutriscore_grade,nova_group");
         handler.Solicitudes.ShouldBe(1);
         resultado.ShouldNotBeNull();
         resultado.Resultado.ShouldBe(ResultadoConsultaExterna.Encontrado);
@@ -42,6 +48,11 @@ public class OpenFoodFactsProductCatalogClientTests
         resultado.Nombre.ShouldBe("Nutella");
         resultado.Marca.ShouldBe("Ferrero");
         resultado.ImagenUrl.ShouldBe("https://example.com/nutella.jpg");
+        resultado.Categorias.ShouldBe("Productos para untar");
+        resultado.Ingredientes.ShouldBe("Azúcar, leche, avellanas");
+        resultado.Alergenos.ShouldBe(new[] { "en:milk", "en:nuts" });
+        resultado.NutriScore.ShouldBe("e");
+        resultado.GrupoNova.ShouldBe(4);
     }
 
     [Fact]
@@ -61,6 +72,11 @@ public class OpenFoodFactsProductCatalogClientTests
         resultado.Nombre.ShouldBeNull();
         resultado.Marca.ShouldBeNull();
         resultado.ImagenUrl.ShouldBeNull();
+        resultado.Categorias.ShouldBeNull();
+        resultado.Ingredientes.ShouldBeNull();
+        resultado.Alergenos.ShouldBeNull();
+        resultado.NutriScore.ShouldBeNull();
+        resultado.GrupoNova.ShouldBeNull();
     }
 
     [Fact]
@@ -141,6 +157,75 @@ public class OpenFoodFactsProductCatalogClientTests
         var resultado = await catalogClient.GetByBarcodeAsync(CodigoBarras);
 
         VerificarServicioNoDisponible(resultado);
+    }
+
+    [Theory]
+    [InlineData("unknown", 0)]
+    [InlineData("not-applicable", 5)]
+    [InlineData(" ", -1)]
+    public async Task Deberia_Conservar_Como_Ausentes_Los_Datos_No_Informados(string nutriScore, int nova)
+    {
+        var json = JsonSerializer.Serialize(new
+        {
+            product = new
+            {
+                code = "0009800800049", product_name = " ", brands = "", image_front_url = "",
+                categories = " ", ingredients_text = "", allergens_tags = new[] { " " },
+                nutriscore_grade = nutriScore, nova_group = nova
+            }
+        });
+        var handler = new RespuestaSimuladaHandler(() => RespuestaJson(json));
+        using var http = CrearClienteHttp(handler);
+
+        var result = await new OpenFoodFactsProductCatalogClient(http).GetByBarcodeAsync("0009800800049");
+
+        result.ShouldNotBeNull();
+        result.Resultado.ShouldBe(ResultadoConsultaExterna.Encontrado);
+        result.CodigoBarras.ShouldBe("0009800800049");
+        result.Nombre.ShouldBeNull();
+        result.Marca.ShouldBeNull();
+        result.ImagenUrl.ShouldBeNull();
+        result.Categorias.ShouldBeNull();
+        result.Ingredientes.ShouldBeNull();
+        result.Alergenos.ShouldBeNull();
+        result.NutriScore.ShouldBeNull();
+        result.GrupoNova.ShouldBeNull();
+        handler.UrlConsultada!.AbsolutePath.ShouldEndWith("/0009800800049");
+    }
+
+    [Theory]
+    [InlineData(HttpStatusCode.OK, ResultadoConsultaExterna.Encontrado)]
+    [InlineData(HttpStatusCode.NotFound, ResultadoConsultaExterna.NoEncontrado)]
+    [InlineData(HttpStatusCode.TooManyRequests, ResultadoConsultaExterna.LimiteDeSolicitudesExcedido)]
+    [InlineData(HttpStatusCode.ServiceUnavailable, ResultadoConsultaExterna.ServicioNoDisponible)]
+    public async Task Deberia_Registrar_Operacion_Duracion_Y_Resultado_Sin_El_Contenido(
+        HttpStatusCode status, ResultadoConsultaExterna expected)
+    {
+        using var http = CrearClienteHttp(new RespuestaSimuladaHandler(() => status == HttpStatusCode.OK
+            ? RespuestaJson("""{"product":{"code":"3017620422003","product_name":"contenido privado"}}""")
+            : RespuestaError(status)));
+        var logger = new RegistroDePrueba<OpenFoodFactsProductCatalogClient>();
+
+        await new OpenFoodFactsProductCatalogClient(http, logger).GetByBarcodeAsync(CodigoBarras);
+
+        logger.Entradas.Count.ShouldBe(1);
+        var entry = logger.Entradas[0];
+        entry.Count.ShouldBe(4);
+        entry["Operacion"].ShouldBe("ConsultaPorCodigo");
+        entry["Resultado"].ShouldBe(expected);
+        ((long)entry["DuracionMs"]!).ShouldBeGreaterThanOrEqualTo(0);
+        entry.ContainsKey("{OriginalFormat}").ShouldBeTrue();
+        logger.Excepciones[0].ShouldBeNull();
+    }
+
+    [Fact]
+    public async Task Deberia_Controlar_Una_Respuesta_Sin_Producto()
+    {
+        using var http = CrearClienteHttp(new RespuestaSimuladaHandler(() => RespuestaJson("{}")));
+
+        var result = await new OpenFoodFactsProductCatalogClient(http).GetByBarcodeAsync(CodigoBarras);
+
+        VerificarServicioNoDisponible(result);
     }
 
     private static HttpClient CrearClienteHttp(HttpMessageHandler handler)

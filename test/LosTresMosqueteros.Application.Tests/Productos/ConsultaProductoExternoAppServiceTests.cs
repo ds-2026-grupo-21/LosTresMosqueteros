@@ -14,7 +14,8 @@ public class ConsultaProductoExternoAppServiceTests
     public ConsultaProductoExternoAppServiceTests()
     {
         _catalogClient = Substitute.For<IExternalProductCatalogClient>();
-        _appService = new ConsultaProductoExternoAppService(_catalogClient);
+        _appService = new ConsultaProductoExternoAppService(
+            _catalogClient, Substitute.For<IExternalProductSearchClient>());
     }
 
     [Fact]
@@ -26,7 +27,12 @@ public class ConsultaProductoExternoAppServiceTests
             CodigoBarras = CodigoBarras,
             Nombre = "Leche entera 1L",
             Marca = "Marca de prueba",
-            ImagenUrl = "https://example.com/producto.jpg"
+            ImagenUrl = "https://example.com/producto.jpg",
+            Categorias = "Lácteos",
+            Ingredientes = "Leche",
+            Alergenos = new() { "en:milk" },
+            NutriScore = "b",
+            GrupoNova = 1
         };
 
         var resultado = await ConsultarAsync(producto);
@@ -36,6 +42,11 @@ public class ConsultaProductoExternoAppServiceTests
         resultado.Nombre.ShouldBe("Leche entera 1L");
         resultado.Marca.ShouldBe("Marca de prueba");
         resultado.ImagenUrl.ShouldBe("https://example.com/producto.jpg");
+        resultado.Categorias.ShouldBe("Lácteos");
+        resultado.Ingredientes.ShouldBe("Leche");
+        resultado.Alergenos.ShouldBe(new[] { "en:milk" });
+        resultado.NutriScore.ShouldBe("b");
+        resultado.GrupoNova.ShouldBe(1);
     }
 
     [Fact]

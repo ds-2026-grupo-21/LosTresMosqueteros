@@ -1,0 +1,7 @@
+:host { display: block; min-width: 0; }
+.card { max-width: 48rem; }
+.entry-row { display: flex; align-items: center; gap: .75rem; }
+.entry-row input, .entry-row span { min-width: 0; overflow-wrap: anywhere; }
+.entry-row button { flex-shrink: 0; }
+fieldset { min-width: 0; }
+@media (max-width: 480px) { .entry-row { flex-wrap: wrap; } }

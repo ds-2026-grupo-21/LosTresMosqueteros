@@ -277,7 +277,8 @@ public class ExpirationWarningManagerTests
         await WithUnitOfWorkAsync(async () =>
         {
             var products = GetRequiredService<IRepository<Producto, Guid>>();
-            var product = await products.InsertAsync(new Producto(Guid.NewGuid(), "7790000000001", "Producto de prueba"));
+            var product = await products.FindAsync(x => x.CodigoBarras == "7790000000001")
+                ?? await products.InsertAsync(new Producto(Guid.NewGuid(), "7790000000001", "Producto de prueba"));
             var item = new PantryItem(id, ownerId ?? Guid.NewGuid(), product.Id, date);
             if (consumed)
             {

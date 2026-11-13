@@ -6,4 +6,5 @@ namespace LosTresMosqueteros.Productos;
 public interface IConsultaProductoExternoAppService : IApplicationService
 {
     Task<ExternalProductDto> GetAsync(ConsultarProductoExternoDto input);
+    Task<ExternalProductSearchResultDto> SearchAsync(BuscarProductosExternosDto input);
 }

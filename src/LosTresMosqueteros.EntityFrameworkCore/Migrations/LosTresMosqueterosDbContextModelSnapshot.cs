@@ -128,14 +128,93 @@ namespace LosTresMosqueteros.Migrations
                     b.ToTable("AppPantryItems", (string)null);
                 });
 
+            modelBuilder.Entity("LosTresMosqueteros.Preferences.UserPreference", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<string>("ConcurrencyStamp")
+                        .IsConcurrencyToken()
+                        .IsRequired()
+                        .HasMaxLength(40)
+                        .HasColumnType("nvarchar(40)")
+                        .HasColumnName("ConcurrencyStamp");
+
+                    b.Property<DateTime>("CreationTime")
+                        .HasColumnType("datetime2")
+                        .HasColumnName("CreationTime");
+
+                    b.Property<Guid?>("CreatorId")
+                        .HasColumnType("uniqueidentifier")
+                        .HasColumnName("CreatorId");
+
+                    b.Property<string>("ExtraProperties")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)")
+                        .HasColumnName("ExtraProperties");
+
+                    b.Property<DateTime?>("LastModificationTime")
+                        .HasColumnType("datetime2")
+                        .HasColumnName("LastModificationTime");
+
+                    b.Property<Guid?>("LastModifierId")
+                        .HasColumnType("uniqueidentifier")
+                        .HasColumnName("LastModifierId");
+
+                    b.Property<string>("PhotoDataUrl")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<bool>("ShowAlerts")
+                        .HasColumnType("bit");
+
+                    b.Property<Guid>("UserId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("UserId")
+                        .IsUnique();
+
+                    b.ToTable("AppUserPreferences", (string)null);
+                });
+
+            modelBuilder.Entity("LosTresMosqueteros.Preferences.WatchedItem", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
+
+                    b.Property<string>("NormalizedName")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)")
+                        .UseCollation("Latin1_General_100_BIN2");
+
+                    b.Property<Guid>("UserPreferenceId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("UserPreferenceId", "NormalizedName")
+                        .IsUnique();
+
+                    b.ToTable("AppWatchedItems", (string)null);
+                });
+
             modelBuilder.Entity("LosTresMosqueteros.Productos.Producto", b =>
                 {
                     b.Property<Guid>("Id")
                         .HasColumnType("uniqueidentifier");
 
                     b.Property<string>("Alergenos")
-                        .HasMaxLength(256)
-                        .HasColumnType("nvarchar(256)");
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("Categorias")
+                        .HasColumnType("nvarchar(max)");
 
                     b.Property<string>("CodigoBarras")
                         .IsRequired()
@@ -170,9 +249,14 @@ namespace LosTresMosqueteros.Migrations
                         .HasColumnType("nvarchar(max)")
                         .HasColumnName("ExtraProperties");
 
+                    b.Property<int?>("GrupoNova")
+                        .HasColumnType("int");
+
+                    b.Property<string>("ImagenUrl")
+                        .HasColumnType("nvarchar(max)");
+
                     b.Property<string>("Ingredientes")
-                        .HasMaxLength(1024)
-                        .HasColumnType("nvarchar(1024)");
+                        .HasColumnType("nvarchar(max)");
 
                     b.Property<bool>("IsDeleted")
                         .ValueGeneratedOnAdd()
@@ -188,14 +272,19 @@ namespace LosTresMosqueteros.Migrations
                         .HasColumnType("uniqueidentifier")
                         .HasColumnName("LastModifierId");
 
+                    b.Property<string>("Marca")
+                        .HasColumnType("nvarchar(max)");
+
                     b.Property<string>("Nombre")
-                        .IsRequired()
-                        .HasMaxLength(128)
-                        .HasColumnType("nvarchar(128)");
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("NutriScore")
+                        .HasColumnType("nvarchar(max)");
 
                     b.HasKey("Id");
 
-                    b.HasIndex("CodigoBarras");
+                    b.HasIndex("CodigoBarras")
+                        .IsUnique();
 
                     b.ToTable("AppProductos", (string)null);
                 });
@@ -2086,6 +2175,15 @@ namespace LosTresMosqueteros.Migrations
                         .IsRequired();
                 });
 
+            modelBuilder.Entity("LosTresMosqueteros.Preferences.WatchedItem", b =>
+                {
+                    b.HasOne("LosTresMosqueteros.Preferences.UserPreference", null)
+                        .WithMany("WatchedItems")
+                        .HasForeignKey("UserPreferenceId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+                });
+
             modelBuilder.Entity("Volo.Abp.AuditLogging.AuditLogAction", b =>
                 {
                     b.HasOne("Volo.Abp.AuditLogging.AuditLog", null)
@@ -2282,6 +2380,11 @@ namespace LosTresMosqueteros.Migrations
                     b.HasOne("Volo.Abp.OpenIddict.Authorizations.OpenIddictAuthorization", null)
                         .WithMany()
                         .HasForeignKey("AuthorizationId");
+                });
+
+            modelBuilder.Entity("LosTresMosqueteros.Preferences.UserPreference", b =>
+                {
+                    b.Navigation("WatchedItems");
                 });
 
             modelBuilder.Entity("Volo.Abp.AuditLogging.AuditLog", b =>

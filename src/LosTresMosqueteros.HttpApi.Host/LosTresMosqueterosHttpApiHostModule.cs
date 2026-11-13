@@ -107,6 +107,14 @@ public class LosTresMosqueterosHttpApiHostModule : AbpModule
                 "LosTresMosqueteros/1.0 (https://github.com/ds-2026-grupo-21/LosTresMosqueteros)");
         });
 
+        context.Services.AddHttpClient<IExternalProductSearchClient, SearchALiciousProductSearchClient>(client =>
+        {
+            client.BaseAddress = new Uri("https://search.openfoodfacts.org/");
+            client.Timeout = TimeSpan.FromSeconds(15);
+            client.DefaultRequestHeaders.UserAgent.ParseAdd(
+                "LosTresMosqueteros/1.0 (https://github.com/ds-2026-grupo-21/LosTresMosqueteros)");
+        });
+
         if (!configuration.GetValue<bool>("App:DisablePII"))
         {
             Microsoft.IdentityModel.Logging.IdentityModelEventSource.ShowPII = true;

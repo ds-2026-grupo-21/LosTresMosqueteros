@@ -1,4 +1,5 @@
 using System;
+using LosTresMosqueteros.Productos;
 using Microsoft.Extensions.DependencyInjection;
 using Volo.Abp.Uow;
 using Volo.Abp.AuditLogging.EntityFrameworkCore;
@@ -43,7 +44,9 @@ public class LosTresMosqueterosEntityFrameworkCoreModule : AbpModule
                 /* Remove "includeAllEntities: true" to create
                  * default repositories only for aggregate roots */
             options.AddDefaultRepositories(includeAllEntities: true);
+            options.AddRepository<Producto, ProductoRepository>();
         });
+        context.Services.AddTransient<IProductoRepository, ProductoRepository>();
 
         if (AbpStudioAnalyzeHelper.IsInAnalyzeMode)
         {

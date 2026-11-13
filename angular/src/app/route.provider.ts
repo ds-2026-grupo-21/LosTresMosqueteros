@@ -9,6 +9,13 @@ function configureRoutes() {
   const routes = inject(RoutesService);
   routes.add([
       {
+        path: '/preferences',
+        name: '::Preferences:Title',
+        iconClass: 'fas fa-sliders',
+        order: 3,
+        layout: eLayoutType.application,
+      },
+      {
         path: '/pantry',
         name: '::Menu:Pantry',
         iconClass: 'fas fa-box-open',

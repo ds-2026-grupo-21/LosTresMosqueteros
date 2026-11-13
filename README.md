@@ -1,6 +1,8 @@
 # LosTresMosqueteros
 
-Repositorio del Trabajo Práctico Integrador de Desarrollo de Software 2026.
+Despensa Inteligente — Trabajo Práctico Integrador de Desarrollo de Software 2026, UTN FRCU.
+
+Aplicación con backend ABP en capas (.NET 10), SQL Server y frontend Angular 22. Cada usuario administra su despensa, su perfil y sus preferencias alimentarias.
 
 ## Integrantes
 
@@ -8,97 +10,119 @@ Repositorio del Trabajo Práctico Integrador de Desarrollo de Software 2026.
 - Lara Villaverde ([@laravillaverde29](https://github.com/laravillaverde29))
 - Marcos Tournoud ([@Hattingg](https://github.com/Hattingg))
 
+## Estado de la aplicación
+
+| Funcionalidad | Disponible |
+| --- | --- |
+| Ingreso y perfil | Autenticación de ABP y edición de nombre y correo en `/account/manage`. |
+| Mi despensa | Listado paginado, edición de cantidad/unidad/vencimiento, consumo y eliminación con confirmación en `/pantry`. |
+| Preferencias | Ingredientes o alérgenos a vigilar, opción de alertas y foto opcional en `/preferences`. |
+| Catálogo externo | Consulta por código, búsqueda por texto paginada y detalle mediante la API propia. |
+| Guardado de productos | Guardado por código y recuperación interna sin duplicados, separado de crear un ítem de despensa. |
+| Vencimientos | Worker que registra advertencias con un umbral de tres días y fecha de referencia UTC. |
+
+Las operaciones propias requieren autenticación. Despensa y preferencias obtienen el propietario de la sesión; un ítem ajeno responde 404. Los textos de las pantallas están disponibles en español e inglés.
+
+Las pantallas de búsqueda/detalle y guardado del catálogo, y la comparación de preferencias con productos para mostrar advertencias, corresponden al siguiente incremento. La opción de alertas se persiste, pero todavía no controla esas advertencias.
+
 ## Requisitos
 
-Para ejecutar el proyecto localmente se necesita:
-
-- Visual Studio 2022 o 2026 con la carga de trabajo **Desarrollo de ASP.NET y web**.
 - .NET 10 SDK.
-- Node.js 24.15.0 o superior.
-- Yarn 1.22.x.
-- SQL Server Developer o SQL Server Express.
-- SQL Server Management Studio (SSMS).
-- ABP Studio.
-- Git.
+- Node.js 24.15.0 o una versión posterior de la rama 24, y Yarn 1.22.x.
+- SQL Server Developer o Express en ejecución.
+- ABP CLI para restaurar las bibliotecas web y generar proxies.
+- Git. Visual Studio 2026 y SSMS son opcionales.
 
-## Configuración local
+## Configuración y ejecución local
 
-La aplicación utiliza SQL Server mediante Entity Framework Core.
+1. Configurar la misma conexión de desarrollo en `src/LosTresMosqueteros.DbMigrator/appsettings.json` y `src/LosTresMosqueteros.HttpApi.Host/appsettings.json`, o mediante la variable de entorno `ConnectionStrings__Default` en ambos procesos. No publicar credenciales ni configuraciones personales.
 
-La cadena de conexión local debe configurarse en los siguientes archivos:
+   Ejemplo con autenticación de Windows:
 
-- `src/LosTresMosqueteros.DbMigrator/appsettings.json`
-- `src/LosTresMosqueteros.HttpApi.Host/appsettings.json`
+   ```json
+   "ConnectionStrings": {
+     "Default": "Server=localhost;Database=LosTresMosqueteros;Trusted_Connection=True;TrustServerCertificate=True"
+   }
+   ```
 
-Configuración utilizada para SQL Server Express:
+   Para una instancia Express, usar `localhost\\SQLEXPRESS` como servidor en el JSON.
 
-```json
-"ConnectionStrings": {
-  "Default": "Server=localhost\\SQLEXPRESS;Database=LosTresMosqueteros;Trusted_Connection=True;TrustServerCertificate=True"
-}
+2. Desde la raíz del repositorio, restaurar dependencias y preparar HTTPS local:
+
+   ```powershell
+   dotnet restore LosTresMosqueteros.slnx
+   abp install-libs
+   dotnet dev-certs https --trust
+   ```
+
+3. Aplicar las migraciones **desde el directorio de DbMigrator**, para que se cargue su configuración:
+
+   ```powershell
+   cd src/LosTresMosqueteros.DbMigrator
+   dotnet run
+   ```
+
+   Revisar la conexión antes de ejecutarlo. Si hay códigos de barras duplicados, la migración se detiene para permitir su revisión; no elimina productos ni referencias automáticamente.
+
+4. En otra terminal, desde la raíz, iniciar el backend:
+
+   ```powershell
+   cd src/LosTresMosqueteros.HttpApi.Host
+   dotnet run
+   ```
+
+   Swagger: [https://localhost:44312/swagger](https://localhost:44312/swagger). Para ejecutar operaciones privadas, iniciar sesión mediante la autorización de Swagger o usar Bearer.
+
+5. En otra terminal, desde la raíz, iniciar Angular:
+
+   ```powershell
+   cd angular
+   yarn install --frozen-lockfile
+   yarn start
+   ```
+
+   Aplicación: [http://localhost:4200](http://localhost:4200). La configuración de conexión está en `angular/src/environments/environment.ts`.
+
+## Contratos y reglas principales
+
+- **Despensa:** `GET/POST /api/app/pantry`, `GET/PUT/DELETE /api/app/pantry/{id}` y `POST /api/app/pantry/{id}/mark-consumed`. Cantidad, unidad y vencimiento son opcionales. La cantidad es no negativa y tiene hasta dos decimales; la interfaz limita su valor a 999.999.999.999,99 para conservar precisión. La unidad admite hasta 50 caracteres.
+- **Historial:** los ítems consumidos permanecen visibles hasta su eliminación explícita. Al eliminar un ítem se eliminan sus advertencias asociadas.
+- **Fechas:** el vencimiento es una fecha sin hora. El worker usa el día UTC, que puede diferir del día local cerca de medianoche.
+- **Catálogo y guardado:** se conservan los datos ausentes. Guardar un código existente devuelve el mismo identificador. Consultar el catálogo no guarda productos y guardar un producto no crea un ítem de despensa.
+- **Preferencias:** hasta 50 entradas de 100 caracteres, sin vacíos ni repetidos por mayúsculas o acentos. Foto opcional PNG/JPEG válida, de hasta 80000 bytes, una imagen estática y hasta 16 megapíxeles.
+
+Los proxies están en `angular/src/app/proxy`. Si cambian los contratos, regenerarlos desde `angular` con el backend iniciado:
+
+```powershell
+abp generate-proxy -t ng --url https://localhost:44312
 ```
 
-## Despensa: contrato del backend (TP10)
+Las traducciones propias están en los JSON de `src/LosTresMosqueteros.Domain.Shared/Localization/LosTresMosqueteros`; reiniciar el backend después de modificarlas.
 
-`IPantryAppService` ofrece `CreateAsync` (RF-10) y `GetListAsync`, `GetAsync`, `UpdateAsync`, `MarkConsumedAsync` y `DeleteAsync` (RF-11). El listado está paginado y ordenado por fecha de creación descendente. `PantryItemDto` incluye el identificador del ítem, el producto y su nombre, estado, cantidad, unidad y vencimiento.
+## Pruebas
 
-Las rutas verificadas en Swagger son `GET` y `POST /api/app/pantry`, `GET`, `PUT` y `DELETE /api/app/pantry/{id}`, y `POST /api/app/pantry/{id}/mark-consumed`. El proxy generado por ABP expone estas operaciones mediante `PantryService`.
+Desde la raíz:
 
-El servicio requiere autenticación; obtiene el propietario de la sesión y responde 404 tanto para ítems inexistentes como para ítems de otro usuario. Cantidad, unidad y vencimiento son opcionales. La cantidad admite valores no negativos con hasta dos decimales y 16 dígitos enteros; la unidad tiene un máximo de 50 caracteres.
+```powershell
+dotnet test LosTresMosqueteros.slnx -c Release
+```
 
-Los ítems consumidos se conservan en el listado con estado `Consumed` como historial hasta que el usuario los elimine explícitamente. Al eliminar un ítem se eliminan sus advertencias asociadas. El worker utiliza la fecha UTC y un umbral de tres días.
+Desde `angular`:
 
-La relación entre advertencias e ítems impide guardar una advertencia para un ítem inexistente y elimina las advertencias asociadas al eliminarlo. Después de actualizar la rama se debe ejecutar DbMigrator. Si una base ya contiene advertencias sin ítem, es necesario revisarlas antes de aplicar esta migración.
+```powershell
+yarn test --watch=false
+yarn build
+```
 
-## Mi despensa: listado Angular (TP10)
+La suite utiliza proveedores externos simulados y bases aisladas. Las pruebas con SQLite no reemplazan la verificación de las migraciones en SQL Server. El guardado concurrente tiene una prueba que fuerza dos lecturas iniciales sin producto y verifica la recuperación del conflicto del índice único.
 
-La ruta `/pantry` requiere una sesión iniciada y se accede desde el menú **Mi despensa**. El listado usa `PantryService` y `ListService` para consultar y paginar; presenta los estados de carga, error con reintento, lista vacía y resultados. Las fechas se muestran según el idioma de la aplicación. El listado muestra los valores ausentes como «No disponible» y distingue los ítems consumidos.
+[Estado del CI](https://github.com/ds-2026-grupo-21/LosTresMosqueteros/actions). La medición unitaria se configura en `CodeCoverage.runsettings`; el mínimo del 70 % corresponde al cierre del trabajo final.
 
-La fecha de vencimiento es una fecha sin hora (`DateOnly`); la pantalla muestra esa misma fecha con el formato regional y no calcula los días restantes. El worker compara la fecha de vencimiento con el día actual en UTC, por lo que el día de referencia puede diferir del día local cerca de la medianoche.
+## Documentación y continuidad
 
-El listado usa `skipHandleError` porque muestra su propio mensaje de error localizado y ofrece reintentar; así se evita duplicar el aviso predeterminado de ABP.
+- [Catálogo externo: contratos, paginación y comprobaciones](docs/TP11-Catalogo.md).
+- [Integración: guardado, preferencias, migraciones y resultados](docs/TP11-Integracion.md).
+- [Wiki del proyecto](https://github.com/ds-2026-grupo-21/LosTresMosqueteros/wiki).
+- [Issue del incremento](https://github.com/ds-2026-grupo-21/LosTresMosqueteros/issues/30).
 
-Si no hay conexión durante el inicio de la aplicación, se muestra un mensaje localizado con la opción de reintentar. Una vez iniciada, se conserva el manejo habitual de errores de ABP.
-
-## Mi despensa: edición, consumo y eliminación (TP10)
-
-### Correspondencia con el BackEnd y el proxy
-
-| Operación de la pantalla | Método del proxy (`PantryService`) | Endpoint |
-|---|---|---|
-| Listar ítems propios (paginado) | `getList` | `GET /api/app/pantry` |
-| Editar cantidad, unidad y vencimiento | `update` | `PUT /api/app/pantry/{id}` |
-| Marcar como consumido | `markConsumed` | `POST /api/app/pantry/{id}/mark-consumed` |
-| Eliminar | `delete` | `DELETE /api/app/pantry/{id}` |
-
-La interfaz no reemplaza la autorización del servidor: ocultar o deshabilitar botones es solo usabilidad.
-
-Componentes: `PantryComponent` (lista, consumo y eliminación) y `PantryEditModalComponent` (formulario reactivo de edición). Los proxies están en `angular/src/app/proxy` y se generan con `abp generate-proxy -t ng`; no se editan a mano.
-
-### Ítems consumidos
-
-Se conservan como historial, visibles con la etiqueta "Consumido". El botón "Marcar como consumido" se oculta en ellos. Para quitarlos, el usuario los elimina de forma explícita, con confirmación previa. Después de editar, consumir o eliminar se recarga la página actual con `getWithoutPageReset`.
-
-### Manejo de errores
-
-- **Edición:** `skipHandleError: true`. El error se muestra dentro del modal, sin cerrarlo y sin perder lo ingresado. Un 400 muestra "el servidor rechazó algunos valores"; otro error muestra un mensaje genérico de guardado.
-- **Consumo y eliminación:** `skipHandleError: true`. Se muestra un aviso localizado sobre la lista.
-- No se muestran códigos de estado ni detalles técnicos al usuario.
-
-### Validaciones
-
-El formulario valida cantidad no negativa con hasta dos decimales y unidad de hasta 50 caracteres. Para evitar pérdida de precisión en JavaScript, la interfaz limita la cantidad a 999.999.999.999,99; el servidor conserva su propio límite y sus validaciones.
-
-### Acceso a ítems ajenos
-
-Un ítem de otro usuario responde 404 en todas las operaciones, igual que uno inexistente.
-
-### Localización
-
-Los textos usan claves con prefijo `Pantry:` en `en.json` y `es.json` (proyecto `Domain.Shared`). Después de modificarlas hay que reiniciar el host, porque Angular toma las traducciones del servidor.
-
-### Pruebas
-
-- Componente (Vitest): `cd angular && yarn test`. Las pruebas cubren los estados de carga, error, vacío y resultados, la edición con datos inválidos, la confirmación previa de eliminación y la cancelación sin llamada al servicio.
-- BackEnd: Test Explorer en Visual Studio. La siguiente captura corresponde a una ejecución anterior de 58 pruebas. <img width="827" height="727" alt="Test Explorer: 58 pruebas aprobadas" src="https://github.com/user-attachments/assets/ef4f15c3-1486-4e06-8570-f51f246e0ddc" />
-
+Integramos las ramas de funcionalidad en `main` con revisión de otro integrante y CI en verde. La guía de continuidad reserva el PR docente `main → prod` para la aplicación final completa.

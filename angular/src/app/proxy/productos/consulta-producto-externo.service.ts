@@ -1,4 +1,4 @@
-import type { ConsultarProductoExternoDto, ExternalProductDto } from './models';
+import type { BuscarProductosExternosDto, ConsultarProductoExternoDto, ExternalProductDto, ExternalProductSearchResultDto } from './models';
 import { RestService, Rest } from '@abp/ng.core';
 import { Injectable, inject } from '@angular/core';
 
@@ -16,6 +16,16 @@ export class ConsultaProductoExternoService {
       headers: { Accept: 'application/json' },
       url: '/api/app/consulta-producto-externo',
       params: { codigoBarras: input.codigoBarras },
+    },
+    { apiName: this.apiName,...config });
+
+
+  search = (input: BuscarProductosExternosDto, config?: Partial<Rest.Config>) =>
+    this.restService.request<any, ExternalProductSearchResultDto>({
+      method: 'POST',
+      headers: { Accept: 'application/json' },
+      url: '/api/app/consulta-producto-externo/search',
+      body: input,
     },
     { apiName: this.apiName,...config });
 }

@@ -11,9 +11,11 @@ namespace LosTresMosqueteros.Productos;
 [Authorize]
 public class ProductoAppService : CrudAppService<Producto, ProductoDto, ProductoDto, Guid, PagedAndSortedResultRequestDto, CreateProductoDto, CreateProductoDto>, IProductoAppService
 {
-    public ProductoAppService(IRepository<Producto, Guid> repository)
+    private readonly IProductoRepository _productos;
+    public ProductoAppService(IProductoRepository repository)
         : base(repository)
     {
+        _productos = repository;
     }
 
     public override async Task<ProductoDto> CreateAsync(CreateProductoDto input)
@@ -26,21 +28,15 @@ public class ProductoAppService : CrudAppService<Producto, ProductoDto, Producto
             input.Alergenos
         );
 
-        await Repository.InsertAsync(producto);
+        producto = await _productos.InsertarUnicoAsync(producto, devolverExistente: false);
 
         return await MapToGetOutputDtoAsync(producto);
     }
 
     public override async Task<ProductoDto> UpdateAsync(Guid id, CreateProductoDto input)
     {
-        var producto = await Repository.GetAsync(id);
-
-        producto.SetCodigoBarras(input.CodigoBarras);
-        producto.SetNombre(input.Nombre);
-        producto.SetIngredientes(input.Ingredientes);
-        producto.SetAlergenos(input.Alergenos);
-
-        await Repository.UpdateAsync(producto);
+        var producto = await _productos.ActualizarUnicoAsync(id, input.CodigoBarras, input.Nombre,
+            input.Ingredientes, input.Alergenos);
 
         return await MapToGetOutputDtoAsync(producto);
     }
