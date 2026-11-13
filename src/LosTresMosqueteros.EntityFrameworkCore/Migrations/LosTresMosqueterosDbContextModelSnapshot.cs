@@ -191,7 +191,8 @@ namespace LosTresMosqueteros.Migrations
                     b.Property<string>("NormalizedName")
                         .IsRequired()
                         .HasMaxLength(100)
-                        .HasColumnType("nvarchar(100)");
+                        .HasColumnType("nvarchar(100)")
+                        .UseCollation("Latin1_General_100_BIN2");
 
                     b.Property<Guid>("UserPreferenceId")
                         .HasColumnType("uniqueidentifier");

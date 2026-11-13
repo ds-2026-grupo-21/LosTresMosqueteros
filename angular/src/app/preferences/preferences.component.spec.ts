@@ -83,7 +83,8 @@ describe('PreferencesComponent', () => {
   });
   it('lee una foto local y la incluye en el guardado', async () => {
     loaded.next({ watchedItems: [] }); const c = fixture.componentInstance;
-    const file = new File([new Uint8Array([137,80,78,71,13,10,26,10,0,0,0,0])], 'foto.png', { type: 'image/png' });
+    const png = 'iVBORw0KGgoAAAANSUhEUgAAAAIAAAACCAYAAABytg0kAAAAAXNSR0IArs4c6QAAAARnQU1BAACxjwv8YQUAAAAJcEhZcwAADsMAAA7DAcdvqGQAAAALSURBVBhXY2BABwAAEgABp3qZbgAAAABJRU5ErkJggg==';
+    const file = new File([Uint8Array.from(atob(png), c => c.charCodeAt(0))], 'foto.png', { type: 'image/png' });
     await c.choosePhoto({ target: { files: [file], value: 'foto' } } as unknown as Event);
     expect(c.photo()).toMatch(/^data:image\/png;base64,/); c.save();
     expect(update).toHaveBeenCalledWith(expect.objectContaining({ photoDataUrl: c.photo() }), { skipHandleError: true });

@@ -32,6 +32,7 @@ Las migraciones se aplican en orden:
 1. `Added_UserPreferences`: preferencias por usuario y entradas a vigilar.
 2. `CatalogoExternoUnico`: detalle externo, nombre opcional e índice único por código.
 3. `FotoOpcionalPerfil`: foto opcional de cada usuario.
+4. `ComparacionOrdinalPreferencias`: comparación binaria de las claves normalizadas, consistente con el código. Mantiene distintos `œuf` y `oeuf`; mayúsculas y acentos se normalizan antes de guardar.
 
 Antes de modificar el catálogo, la migración comprueba si existen códigos duplicados. Si los encuentra, se detiene con un mensaje para revisarlos y conserva los productos y sus referencias. No elimina ni fusiona datos automáticamente.
 
@@ -41,7 +42,7 @@ En `/preferences` se pueden agregar y quitar hasta 50 entradas de 100 caracteres
 
 El propietario sale de `ICurrentUser`; ningún identificador enviado por el cliente selecciona otro propietario. El formulario diferencia carga, vacío, datos y error, evita envíos simultáneos y conserva los cambios si falla el guardado. Una entrada todavía sin agregar debe agregarse o borrarse antes de guardar.
 
-La foto es opcional: PNG o JPEG de hasta 80000 bytes, con validación de tamaño, formato y firma en servidor. Se guarda junto con las preferencias y se puede quitar. Nombre y correo siguen usando el perfil de ABP, accesible desde el enlace «Editar mi perfil».
+La foto es opcional: PNG o JPEG de hasta 80000 bytes, estática y de hasta 16 megapíxeles. El servidor comprueba el formato y decodifica la imagen completa con SkiaSharp; rechaza datos corruptos o truncados sin modificar las preferencias. El límite de píxeles acota la memoria de decodificación. Incluimos los binarios nativos para Linux, además de Windows. La foto se guarda junto con las preferencias y se puede quitar. Nombre y correo siguen usando el perfil de ABP, accesible desde el enlace «Editar mi perfil».
 
 Los textos propios están en español e inglés. La comparación de preferencias con productos y la aplicación de alertas quedan para el siguiente bloque.
 
@@ -65,13 +66,16 @@ Usamos SQL Server 2019 Developer y bases nuevas de pruebas, sin modificar las ba
 | Edición de código en conflicto | Respuesta controlada, sin cambios parciales. |
 | Angular real | Agregar, rechazar duplicados, guardar y recuperar tras recarga; foto cargada desde la API. |
 | Idioma y móvil | Español e inglés comprobados; a 375 píxeles no hubo desborde horizontal. |
-| Suite integrada y build | 149 tests backend y 43 Angular correctos; build de producción Angular correcto. Se conserva la advertencia previa de tamaño del SCSS de Home. |
+| Suite integrada y build | 154 tests backend y 43 Angular correctos; build de producción Angular correcto. Se conserva la advertencia previa de tamaño del SCSS de Home. |
+| Regresión de concurrencia | Dos guardados leen el código inexistente, intentan insertar con unidades independientes y recuperan una colisión real: mismo identificador y una sola fila. Prueba automatizada sin Internet. |
+| Preferencias en SQL Server tras la corrección | `œuf` y `oeuf` se guardan y recuperan por HTTP; `Maní`/`MANI` se deduplican. Índice único y colación binaria verificados. |
+| Fotos tras la corrección | PNG completo aceptado; PNG/JPEG truncados devuelven 400 sin cambiar los datos previos. Foto y preferencias persisten en una nueva sesión; quitar la foto conserva las entradas. Siete comprobaciones HTTP/SQL correctas. |
 
 Las pruebas unitarias e integración automatizadas simulan el proveedor y no dependen de Internet. Las comprobaciones HTTP contra Open Food Facts se realizaron por separado; sus resultados pueden cambiar con los datos del proveedor. La prueba de cookie del proyecto HttpApi.Host.Tests utiliza rutas mínimas y no se presenta como validación de la API real.
 
 ## Cobertura y continuidad
 
-Con `CodeCoverage.runsettings`, los tests unitarios de Application (35) y Domain (25) consolidan **131 / 355 líneas = 36,90 %**. Se cuentan líneas de reglas y casos de uso propios sin duplicarlas entre informes. Las pruebas de integración no se incluyen en esa cifra.
+La medición inicial con `CodeCoverage.runsettings`, anterior a las correcciones de revisión, consolidó **131 / 355 líneas = 36,90 %** con Application (35 tests) y Domain (25 tests). Se cuentan líneas de reglas y casos de uso propios sin duplicarlas entre informes. Las pruebas de integración no se incluyen en esa cifra.
 
 Esta medición satisface la línea de base del TP11; el mínimo del 70 % corresponde al cierre del final. Marcos coordina su ampliación: completar pruebas unitarias de PantryAppService y ProductoAppService (autores Jesyk/Marcos), reglas de PantryItem y vencimientos (autores del TP08), y los casos restantes de preferencias y producto (Lara/Marcos). La asignación de cada incremento se confirma con el grupo.
 

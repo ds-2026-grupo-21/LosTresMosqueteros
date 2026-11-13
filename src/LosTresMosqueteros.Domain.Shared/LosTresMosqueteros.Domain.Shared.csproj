@@ -10,6 +10,8 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <PackageReference Include="SkiaSharp" Version="4.156.0" />
+    <PackageReference Include="SkiaSharp.NativeAssets.Linux.NoDependencies" Version="4.156.0" />
     <PackageReference Include="Volo.Abp.BackgroundJobs.Domain.Shared" Version="10.6.0" />
     <PackageReference Include="Volo.Abp.AuditLogging.Domain.Shared" Version="10.6.0" />
     <PackageReference Include="Volo.Abp.FeatureManagement.Domain.Shared" Version="10.6.0" />

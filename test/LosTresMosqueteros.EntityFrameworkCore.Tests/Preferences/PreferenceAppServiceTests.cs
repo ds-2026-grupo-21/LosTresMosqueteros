@@ -63,6 +63,17 @@ public class PreferenceAppServiceTests : LosTresMosqueterosApplicationTestBase<L
     }
 
     [Fact]
+    public async Task Conserva_textos_distintos_y_deduplica_mayusculas_y_acentos()
+    {
+        using var user = AsUser(Guid.NewGuid());
+        await _service.UpdateAsync(new UpdateUserPreferenceDto
+        {
+            WatchedItems = new() { "œuf", "oeuf", "Maní", "MANI" }
+        });
+        (await _service.GetAsync()).WatchedItems.ShouldBe(new[] { "œuf", "oeuf", "Maní" }, ignoreOrder: true);
+    }
+
+    [Fact]
     public async Task Actualizar_de_nuevo_agrega_y_quita_entradas_sobre_la_misma_fila()
     {
         var userId = Guid.NewGuid();

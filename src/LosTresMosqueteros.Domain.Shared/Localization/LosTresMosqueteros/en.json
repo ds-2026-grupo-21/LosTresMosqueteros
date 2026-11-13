@@ -56,6 +56,6 @@
     "Preferences:PendingEntry": "Add or clear the pending entry before saving.",
     "Preferences:Photo": "Optional photo (PNG or JPEG, up to 80 kB)",
     "Preferences:RemovePhoto": "Remove photo",
-    "Preferences:PhotoError": "Choose a PNG or JPEG photo up to 80 kB."
+    "Preferences:PhotoError": "Choose a valid, non-animated PNG or JPEG image up to 80 kB and 16 megapixels."
   }
 }

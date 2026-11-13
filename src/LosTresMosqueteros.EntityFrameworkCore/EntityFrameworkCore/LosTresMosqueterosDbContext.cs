@@ -155,6 +155,10 @@ public class LosTresMosqueterosDbContext :
 
             b.Property(x => x.Name).IsRequired().HasMaxLength(PreferenceConsts.MaxNameLength);
             b.Property(x => x.NormalizedName).IsRequired().HasMaxLength(PreferenceConsts.MaxNameLength);
+            if (Database.IsSqlServer())
+            {
+                b.Property(x => x.NormalizedName).UseCollation("Latin1_General_100_BIN2");
+            }
 
             b.HasIndex(x => new { x.UserPreferenceId, x.NormalizedName }).IsUnique();
         });

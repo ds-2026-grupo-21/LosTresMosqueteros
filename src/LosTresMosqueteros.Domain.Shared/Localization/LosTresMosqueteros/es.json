@@ -89,6 +89,6 @@
     "Preferences:PendingEntry": "Agregá o borrá la entrada pendiente antes de guardar.",
     "Preferences:Photo": "Foto opcional (PNG o JPEG, hasta 80 kB)",
     "Preferences:RemovePhoto": "Quitar foto",
-    "Preferences:PhotoError": "Elegí una foto PNG o JPEG de hasta 80 kB."
+    "Preferences:PhotoError": "Elegí una imagen PNG o JPEG válida, sin animación, de hasta 80 kB y 16 megapíxeles."
   }
 }
