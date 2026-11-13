@@ -8,7 +8,7 @@ import { Injectable, inject } from '@angular/core';
 export class ConsultaProductoExternoService {
   private restService = inject(RestService);
   apiName = 'Default';
-
+  
 
   get = (input: ConsultarProductoExternoDto, config?: Partial<Rest.Config>) =>
     this.restService.request<any, ExternalProductDto>({

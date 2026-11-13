@@ -1,4 +1,5 @@
 using LosTresMosqueteros.Pantry;
+using LosTresMosqueteros.Preferences;
 using LosTresMosqueteros.Productos;
 using Microsoft.EntityFrameworkCore;
 using Volo.Abp.AuditLogging.EntityFrameworkCore;
@@ -26,6 +27,8 @@ public class LosTresMosqueterosDbContext :
     public DbSet<Producto> Productos { get; set; }
     public DbSet<PantryItem> PantryItems { get; set; }
     public DbSet<ExpirationWarning> ExpirationWarnings { get; set; }
+    public DbSet<UserPreference> UserPreferences { get; set; }
+    public DbSet<WatchedItem> WatchedItems { get; set; }
 
     #region Entities from the modules
 
@@ -129,6 +132,32 @@ public class LosTresMosqueterosDbContext :
 
             // Clave lógica: una sola advertencia por ítem y tipo
             b.HasIndex(x => new { x.PantryItemId, x.Type }).IsUnique();
+        });
+
+        builder.Entity<UserPreference>(b =>
+        {
+            b.ToTable(LosTresMosqueterosConsts.DbTablePrefix + "UserPreferences", LosTresMosqueterosConsts.DbSchema);
+            b.ConfigureByConvention();
+
+            b.Property(x => x.UserId).IsRequired();
+            b.HasIndex(x => x.UserId).IsUnique(); // una sola fila de preferencias por usuario
+
+            b.HasMany(x => x.WatchedItems)
+                .WithOne()
+                .HasForeignKey(x => x.UserPreferenceId)
+                .IsRequired()
+                .OnDelete(DeleteBehavior.Cascade);
+        });
+
+        builder.Entity<WatchedItem>(b =>
+        {
+            b.ToTable(LosTresMosqueterosConsts.DbTablePrefix + "WatchedItems", LosTresMosqueterosConsts.DbSchema);
+            b.ConfigureByConvention();
+
+            b.Property(x => x.Name).IsRequired().HasMaxLength(PreferenceConsts.MaxNameLength);
+            b.Property(x => x.NormalizedName).IsRequired().HasMaxLength(PreferenceConsts.MaxNameLength);
+
+            b.HasIndex(x => new { x.UserPreferenceId, x.NormalizedName }).IsUnique();
         });
     }
 }
