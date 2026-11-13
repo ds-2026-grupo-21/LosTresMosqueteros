@@ -2,6 +2,11 @@ import { authGuard, permissionGuard } from '@abp/ng.core';
 import { Routes } from '@angular/router';
 export const APP_ROUTES: Routes = [
   {
+    path: 'catalog',
+    canActivate: [authGuard],
+    loadComponent: () => import('./catalog/catalog.component').then(c => c.CatalogComponent),
+  },
+  {
     path: 'preferences',
     canActivate: [authGuard],
     loadComponent: () => import('./preferences/preferences.component').then(c => c.PreferencesComponent),

@@ -1,0 +1,45 @@
+<section class="catalog">
+  <h1>{{ '::Catalog:Title' | abpLocalization }}</h1>
+  <p>{{ '::Catalog:Disclaimer' | abpLocalization }}</p>
+  <p>{{ '::Catalog:Source' | abpLocalization }}</p>
+  <form (submit)="$event.preventDefault(); search()">
+    <label for="search">{{ '::Catalog:SearchLabel' | abpLocalization }}</label>
+    <div class="controls"><input id="search" class="form-control" [formControl]="text" maxlength="200"><button class="btn btn-primary" type="submit">{{ '::Catalog:Search' | abpLocalization }}</button></div>
+  </form>
+  <form (submit)="$event.preventDefault(); openCode()">
+    <label for="barcode">{{ '::Catalog:Barcode' | abpLocalization }}</label>
+    <div class="controls"><input id="barcode" class="form-control" [formControl]="code" inputmode="numeric" maxlength="14"><button class="btn btn-primary" type="submit">{{ '::Catalog:Open' | abpLocalization }}</button></div>
+  </form>
+  @switch (state()) {
+    @case ('loading') { <p role="status">{{ '::Catalog:Loading' | abpLocalization }}</p> }
+    @case ('invalid') { <p role="alert">{{ '::Catalog:Invalid' | abpLocalization }}</p> }
+    @case ('empty') { <p>{{ '::Catalog:Empty' | abpLocalization }}</p> }
+    @case ('notFound') { <p>{{ '::Catalog:NotFound' | abpLocalization }}</p> }
+    @case ('rate') { <p role="alert">{{ '::Catalog:Rate' | abpLocalization }}</p><button class="btn btn-outline-primary" (click)="retry()">{{ '::Catalog:Retry' | abpLocalization }}</button> }
+    @case ('error') { <p role="alert">{{ '::Catalog:Error' | abpLocalization }}</p><button class="btn btn-outline-primary" (click)="retry()">{{ '::Catalog:Retry' | abpLocalization }}</button> }
+    @case ('results') {
+      <ul class="results">
+        @for (item of results()?.productos; track item.codigoBarras) {
+          <li><button class="btn btn-link" (click)="open(item.codigoBarras ?? '')">{{ item.nombre || ('::Catalog:Unavailable' | abpLocalization) }}</button><span> {{ item.marca }}</span></li>
+        }
+      </ul>
+      <div class="controls"><button class="btn btn-outline-primary" [disabled]="(results()?.pagina ?? 1) <= 1" (click)="page(-1)">{{ '::Catalog:Previous' | abpLocalization }}</button><span>{{ results()?.pagina }}</span><button class="btn btn-outline-primary" [disabled]="!canNext()" (click)="page(1)">{{ '::Catalog:Next' | abpLocalization }}</button></div>
+    }
+    @case ('detail') {
+      @if (detail(); as product) {
+        <button class="btn btn-link" (click)="back()">{{ '::Catalog:Back' | abpLocalization }}</button>
+        <h2>{{ product.nombre || ('::Catalog:Unavailable' | abpLocalization) }}</h2>
+        @if (product.imagenUrl && !imageFailed()) { <img [src]="product.imagenUrl" (error)="imageFailed.set(true)" alt=""> } @else { <p>{{ '::Catalog:NoImage' | abpLocalization }}</p> }
+        <dl>
+          <dt>{{ '::Catalog:Barcode' | abpLocalization }}</dt><dd>{{ product.codigoBarras || ('::Catalog:Unavailable' | abpLocalization) }}</dd>
+          <dt>{{ '::Catalog:Brand' | abpLocalization }}</dt><dd>{{ product.marca || ('::Catalog:Unavailable' | abpLocalization) }}</dd>
+          <dt>{{ '::Catalog:Categories' | abpLocalization }}</dt><dd>{{ product.categorias || ('::Catalog:Unavailable' | abpLocalization) }}</dd>
+          <dt>{{ '::Catalog:Ingredients' | abpLocalization }}</dt><dd>{{ product.ingredientes || ('::Catalog:Unavailable' | abpLocalization) }}</dd>
+          <dt>{{ '::Catalog:Allergens' | abpLocalization }}</dt><dd>{{ product.alergenos?.join(', ') || ('::Catalog:Unavailable' | abpLocalization) }}</dd>
+          <dt>Nutri-Score</dt><dd>{{ product.nutriScore || ('::Catalog:Unavailable' | abpLocalization) }}</dd>
+          <dt>NOVA</dt><dd>{{ product.grupoNova ?? ('::Catalog:Unavailable' | abpLocalization) }}</dd>
+        </dl>
+      }
+    }
+  }
+</section>
