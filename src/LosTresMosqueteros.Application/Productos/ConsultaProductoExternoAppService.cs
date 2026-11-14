@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 using System.Threading.Tasks;
+using LosTresMosqueteros.Preferences;
 using Microsoft.AspNetCore.Authorization;
 using Volo.Abp.Application.Services;
 using Volo.Abp.Validation;
@@ -13,13 +14,16 @@ public class ConsultaProductoExternoAppService : ApplicationService, IConsultaPr
 {
     private readonly IExternalProductCatalogClient _catalogClient;
     private readonly IExternalProductSearchClient _searchClient;
+    private readonly IFoodWarningEvaluator _warnings;
 
     public ConsultaProductoExternoAppService(
         IExternalProductCatalogClient catalogClient,
-        IExternalProductSearchClient searchClient)
+        IExternalProductSearchClient searchClient,
+        IFoodWarningEvaluator warnings)
     {
         _catalogClient = catalogClient;
         _searchClient = searchClient;
+        _warnings = warnings;
     }
 
     public async Task<ExternalProductDto> GetAsync(ConsultarProductoExternoDto input)
@@ -27,9 +31,34 @@ public class ConsultaProductoExternoAppService : ApplicationService, IConsultaPr
         ValidarEntrada(input);
         var resultado = await _catalogClient.GetByBarcodeAsync(input.CodigoBarras);
 
-        return resultado ?? new ExternalProductDto
+        if (resultado == null)
         {
-            Resultado = ResultadoConsultaExterna.NoEncontrado
+            return new ExternalProductDto { Resultado = ResultadoConsultaExterna.NoEncontrado };
+        }
+
+        if (resultado.Resultado != ResultadoConsultaExterna.Encontrado)
+        {
+            return resultado;
+        }
+
+        // Se devuelve una copia: el resultado personal no se escribe en el objeto del proveedor.
+        var alergenos = resultado.Alergenos is { Count: > 0 }
+            ? string.Join(", ", resultado.Alergenos)
+            : null;
+
+        return new ExternalProductDto
+        {
+            Resultado = resultado.Resultado,
+            CodigoBarras = resultado.CodigoBarras,
+            Nombre = resultado.Nombre,
+            Marca = resultado.Marca,
+            ImagenUrl = resultado.ImagenUrl,
+            Categorias = resultado.Categorias,
+            Ingredientes = resultado.Ingredientes,
+            Alergenos = resultado.Alergenos,
+            NutriScore = resultado.NutriScore,
+            GrupoNova = resultado.GrupoNova,
+            Advertencias = await _warnings.EvaluateAsync(resultado.Ingredientes, alergenos)
         };
     }
 

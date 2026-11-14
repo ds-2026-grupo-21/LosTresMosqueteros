@@ -1,4 +1,5 @@
 using System.Threading.Tasks;
+using LosTresMosqueteros.Preferences;
 using NSubstitute;
 using Shouldly;
 using Volo.Abp.Validation;
@@ -14,7 +15,7 @@ public class BusquedaProductosExternosAppServiceTests
 
     public BusquedaProductosExternosAppServiceTests()
     {
-        _service = new ConsultaProductoExternoAppService(_catalog, _search);
+        _service = new ConsultaProductoExternoAppService(_catalog, _search, new FoodWarningEvaluatorFake());
     }
 
     [Theory]
@@ -36,7 +37,9 @@ public class BusquedaProductosExternosAppServiceTests
 
         var actual = await _service.SearchAsync(new BuscarProductosExternosDto
         {
-            Texto = "  leche  ", Pagina = pagina, TamanoPagina = 2
+            Texto = "  leche  ",
+            Pagina = pagina,
+            TamanoPagina = 2
         });
 
         actual.ShouldBeSameAs(expected);
@@ -52,7 +55,9 @@ public class BusquedaProductosExternosAppServiceTests
     {
         var expected = new ExternalProductSearchResultDto
         {
-            Resultado = estado, Pagina = 1, TamanoPagina = 10
+            Resultado = estado,
+            Pagina = 1,
+            TamanoPagina = 10
         };
         _search.SearchAsync("arroz", 1, 10).Returns(expected);
 
@@ -96,7 +101,9 @@ public class BusquedaProductosExternosAppServiceTests
 
         await _service.SearchAsync(new BuscarProductosExternosDto
         {
-            Texto = "arroz", Pagina = 200, TamanoPagina = 50
+            Texto = "arroz",
+            Pagina = 200,
+            TamanoPagina = 50
         });
 
         await _search.Received(1).SearchAsync("arroz", 200, 50);
