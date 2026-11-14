@@ -1,6 +1,7 @@
 ﻿using System;
 using Microsoft.AspNetCore.Authorization;
 using Volo.Abp.Domain.Repositories;
+using LosTresMosqueteros.Preferences;
 using LosTresMosqueteros.Productos;
 using System.Threading.Tasks;
 using Volo.Abp.Domain.Entities;
@@ -17,14 +18,17 @@ public class PantryAppService : LosTresMosqueterosAppService, IPantryAppService
     private readonly IRepository<PantryItem, Guid> _pantryItemRepository;
     private readonly IRepository<Producto, Guid> _productRepository;
     private readonly IRepository<ExpirationWarning, Guid> _warningRepository;
+    private readonly IFoodWarningEvaluator _foodWarnings;
     public PantryAppService(
     IRepository<PantryItem, Guid> pantryItemRepository,
     IRepository<Producto, Guid> productRepository,
-    IRepository<ExpirationWarning, Guid> warningRepository)
+    IRepository<ExpirationWarning, Guid> warningRepository,
+    IFoodWarningEvaluator foodWarnings)
     {
         _pantryItemRepository = pantryItemRepository;
         _productRepository = productRepository;
         _warningRepository = warningRepository;
+        _foodWarnings = foodWarnings;
     }
     public async Task<PagedResultDto<PantryItemDto>> GetListAsync(
     PagedResultRequestDto input)
@@ -69,6 +73,10 @@ public class PantryAppService : LosTresMosqueterosAppService, IPantryAppService
             throw new EntityNotFoundException(typeof(Producto), input.ProductId);
         }
 
+        // Se evalúa con el producto ya cargado (sin consultas externas) y las preferencias
+        // actuales del usuario de la sesión. El resultado no se guarda en el ítem ni en el producto.
+        var advertencias = await _foodWarnings.EvaluateAsync(product.Ingredientes, product.Alergenos);
+
         var item = new PantryItem(
             GuidGenerator.Create(),
             ownerId,
@@ -82,7 +90,9 @@ public class PantryAppService : LosTresMosqueterosAppService, IPantryAppService
 
         await _pantryItemRepository.InsertAsync(item);
 
-        return await MapToDtoAsync(item);
+        var dto = await MapToDtoAsync(item);
+        dto.Advertencias = advertencias;
+        return dto;
     }
 
 
