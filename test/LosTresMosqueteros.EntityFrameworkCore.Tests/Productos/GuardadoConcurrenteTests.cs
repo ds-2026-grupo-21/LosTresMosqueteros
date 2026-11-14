@@ -1,6 +1,7 @@
 using System;
 using System.Threading;
 using System.Threading.Tasks;
+using LosTresMosqueteros.Preferences;
 using LosTresMosqueteros.Productos;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
@@ -29,6 +30,10 @@ public class GuardadoConcurrenteTests : LosTresMosqueterosApplicationTestBase<Lo
             CodigoBarras = code,
             Nombre = "Producto concurrente"
         });
+        // Esta prueba verifica la unicidad del producto, no las advertencias (no hay sesión de usuario).
+        var warnings = Substitute.For<IFoodWarningEvaluator>();
+        warnings.EvaluateAsync(Arg.Any<string?>(), Arg.Any<string?>())
+            .Returns(Task.FromResult(new FoodWarningDto { HasPreferences = false }));
 
         async Task<GuardarProductoExternoResultadoDto> SaveAsync()
         {
@@ -43,7 +48,7 @@ public class GuardadoConcurrenteTests : LosTresMosqueterosApplicationTestBase<Lo
                 LazyServiceProvider = services.GetRequiredService<IAbpLazyServiceProvider>()
             };
             var service = new GuardarProductoExternoAppService(repository, catalog,
-                services.GetRequiredService<IGuidGenerator>(), services.GetRequiredService<IObjectMapper>());
+                services.GetRequiredService<IGuidGenerator>(), services.GetRequiredService<IObjectMapper>(), warnings);
             var result = await service.SaveAsync(new() { CodigoBarras = code });
             await request.CompleteAsync();
             coordination.FirstCommitted.TrySetResult();
