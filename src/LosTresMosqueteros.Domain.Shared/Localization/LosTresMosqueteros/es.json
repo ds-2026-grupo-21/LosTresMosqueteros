@@ -112,6 +112,14 @@
     "Preferences:PendingEntry": "Agregá o borrá la entrada pendiente antes de guardar.",
     "Preferences:Photo": "Foto opcional (PNG o JPEG, hasta 80 kB)",
     "Preferences:RemovePhoto": "Quitar foto",
-    "Preferences:PhotoError": "Elegí una imagen PNG o JPEG válida, sin animación, de hasta 80 kB y 16 megapíxeles."
+    "Preferences:PhotoError": "Elegí una imagen PNG o JPEG válida, sin animación, de hasta 80 kB y 16 megapíxeles.",
+    "Warnings:MatchTitle": "Este producto contiene elementos que elegiste vigilar:",
+    "Warnings:NoPreferences": "No tenés elementos configurados para comparar. Podés agregarlos en Mis preferencias.",
+    "Warnings:NoMatches": "Sin coincidencias con tus preferencias sobre los datos disponibles. Esto no garantiza que el producto sea seguro.",
+    "Warnings:Unverifiable": "No pudimos verificar lo siguiente porque el dato falta o no se puede interpretar:",
+    "Warnings:EvaluationError": "No pudimos comparar este producto con tus preferencias. Intentá nuevamente; esto no significa que no haya coincidencias.",
+    "Warnings:Field:Ingredients": "Ingredientes",
+    "Warnings:Field:Allergens": "Alérgenos",
+    "Warnings:Field:Unknown": "Dato no identificado"
   }
 }

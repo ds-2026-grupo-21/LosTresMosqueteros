@@ -79,6 +79,14 @@
     "Preferences:PendingEntry": "Add or clear the pending entry before saving.",
     "Preferences:Photo": "Optional photo (PNG or JPEG, up to 80 kB)",
     "Preferences:RemovePhoto": "Remove photo",
-    "Preferences:PhotoError": "Choose a valid, non-animated PNG or JPEG image up to 80 kB and 16 megapixels."
+    "Preferences:PhotoError": "Choose a valid, non-animated PNG or JPEG image up to 80 kB and 16 megapixels.",
+    "Warnings:MatchTitle": "This product contains items you chose to watch:",
+    "Warnings:NoPreferences": "You have no items set up to compare. You can add them in My preferences.",
+    "Warnings:NoMatches": "No matches with your preferences in the available data. This does not guarantee that the product is safe.",
+    "Warnings:Unverifiable": "We could not check the following because the data is missing or unreadable:",
+    "Warnings:EvaluationError": "We could not compare this product with your preferences. Please try again; this does not mean there are no matches.",
+    "Warnings:Field:Ingredients": "Ingredients",
+    "Warnings:Field:Allergens": "Allergens",
+    "Warnings:Field:Unknown": "Unidentified data"
   }
 }

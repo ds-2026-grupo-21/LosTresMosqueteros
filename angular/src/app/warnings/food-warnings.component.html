@@ -1,0 +1,35 @@
+@if (failed()) {
+  <p class="alert alert-secondary" role="status">{{ '::Warnings:EvaluationError' | abpLocalization }}</p>
+} @else if (warnings()) {
+  @if (personalized()) {
+    @if (matches().length) {
+      <div class="alert alert-danger" role="alert">
+        <strong>{{ '::Warnings:MatchTitle' | abpLocalization }}</strong>
+        <ul class="mb-0">
+          @for (match of matches(); track $index) {
+            <li><span>{{ match.preference }}</span> ({{ fieldKey(match.field) | abpLocalization }})</li>
+          }
+        </ul>
+      </div>
+    } @else if (!hasPreferences()) {
+      <p class="alert alert-info" role="status">{{ '::Warnings:NoPreferences' | abpLocalization }}</p>
+    } @else {
+      <p class="alert alert-info" role="status">{{ '::Warnings:NoMatches' | abpLocalization }}</p>
+    }
+  }
+  @if (unverifiable().length) {
+    <div class="alert alert-warning" role="status">
+      <p class="mb-1">{{ '::Warnings:Unverifiable' | abpLocalization }}</p>
+      <ul class="mb-0">
+        @for (field of unverifiable(); track $index) {
+          <li>{{ fieldKey(field) | abpLocalization }}</li>
+        }
+      </ul>
+    </div>
+  }
+}
+@if (showFooter()) {
+  <p class="text-muted small">
+    {{ '::Catalog:Source' | abpLocalization }}. {{ '::Catalog:Disclaimer' | abpLocalization }}
+  </p>
+}
