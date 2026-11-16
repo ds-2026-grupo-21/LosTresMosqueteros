@@ -4,13 +4,14 @@ import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { FormControl, ReactiveFormsModule } from '@angular/forms';
 import { Observable, Subject, catchError, map, of, switchMap, takeUntil } from 'rxjs';
 import { ConsultaProductoExternoService, ExternalProductDto, ExternalProductSearchResultDto, ResultadoConsultaExterna } from '@proxy/productos';
+import { FoodWarningsComponent } from '../warnings/food-warnings.component';
 
 type State = 'idle' | 'loading' | 'results' | 'detail' | 'empty' | 'notFound' | 'rate' | 'error' | 'invalid';
 type Request = { kind: 'search'; text: string; page: number } | { kind: 'detail'; code: string };
 
 @Component({
   selector: 'app-catalog',
-  imports: [LocalizationPipe, ReactiveFormsModule],
+    imports: [LocalizationPipe, ReactiveFormsModule, FoodWarningsComponent],
   templateUrl: './catalog.component.html',
   styleUrl: './catalog.component.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,

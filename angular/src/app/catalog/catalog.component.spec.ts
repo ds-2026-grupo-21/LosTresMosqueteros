@@ -1,9 +1,11 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { Pipe, PipeTransform } from '@angular/core';
 import { ReactiveFormsModule } from '@angular/forms';
+import { FoodField } from '@proxy/preferences';
 import { ConsultaProductoExternoService, ExternalProductDto, ExternalProductSearchResultDto, ResultadoConsultaExterna } from '@proxy/productos';
 import { Subject } from 'rxjs';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { FoodWarningsComponent } from '../warnings/food-warnings.component';
 import { CatalogComponent } from './catalog.component';
 
 @Pipe({ name: 'abpLocalization' })
@@ -21,7 +23,8 @@ describe('CatalogComponent', () => {
       get: vi.fn(() => { const value = new Subject<ExternalProductDto>(); details.push(value); return value; }),
     };
     TestBed.configureTestingModule({ imports: [CatalogComponent], providers: [{ provide: ConsultaProductoExternoService, useValue: service }] });
-    TestBed.overrideComponent(CatalogComponent, { set: { imports: [TestLocalizationPipe, ReactiveFormsModule] } });
+    TestBed.overrideComponent(CatalogComponent, { set: { imports: [TestLocalizationPipe, ReactiveFormsModule, FoodWarningsComponent] } });
+    TestBed.overrideComponent(FoodWarningsComponent, { set: { imports: [TestLocalizationPipe] } });
     fixture = TestBed.createComponent(CatalogComponent); fixture.detectChanges();
   });
   afterEach(() => TestBed.resetTestingModule());
@@ -82,5 +85,57 @@ describe('CatalogComponent', () => {
     c.open('00000001'); details[0].next({ resultado: ResultadoConsultaExterna.Encontrado, nombre: 'Leche' });
     fixture.detectChanges(); expect(fixture.nativeElement.textContent).toContain('::Catalog:Unavailable');
     c.back(); expect(c.state()).toBe('results');
+  });
+
+  it('el detalle muestra las coincidencias y los datos no verificables de la evaluación', () => {
+    const c = fixture.componentInstance;
+    c.open('00000001');
+    details[0].next({
+      resultado: ResultadoConsultaExterna.Encontrado,
+      nombre: 'Galletas',
+      ingredientes: 'Harina, leche',
+      advertencias: {
+        hasPreferences: true,
+        showAlerts: true,
+        matches: [{ preference: 'Leche', field: FoodField.Ingredients }],
+        unverifiable: [FoodField.Allergens],
+      },
+    });
+    fixture.detectChanges();
+    const text = fixture.nativeElement.textContent as string;
+    expect(text).toContain('::Warnings:MatchTitle');
+    expect(text).toContain('Leche');
+    expect(text).toContain('::Warnings:Unverifiable');
+    expect(text).toContain('::Warnings:Field:Allergens');
+    expect(service.get).toHaveBeenCalledTimes(1);
+  });
+
+  it('con alertas apagadas oculta las coincidencias pero la pantalla conserva fuente y aclaración, sin duplicarlas', () => {
+    const c = fixture.componentInstance;
+    c.open('00000001');
+    details[0].next({
+      resultado: ResultadoConsultaExterna.Encontrado,
+      nombre: 'Galletas',
+      advertencias: {
+        hasPreferences: true,
+        showAlerts: false,
+        matches: [{ preference: 'Leche', field: FoodField.Ingredients }],
+        unverifiable: [FoodField.Allergens],
+      },
+    });
+    fixture.detectChanges();
+    const text = fixture.nativeElement.textContent as string;
+    expect(text).not.toContain('::Warnings:MatchTitle');
+    expect(text).toContain('::Warnings:Unverifiable');
+    expect(text.split('::Catalog:Source').length - 1).toBe(1);
+    expect(text.split('::Catalog:Disclaimer').length - 1).toBe(1);
+  });
+
+  it('un detalle sin evaluación no muestra avisos personalizados', () => {
+    const c = fixture.componentInstance;
+    c.open('00000001');
+    details[0].next({ resultado: ResultadoConsultaExterna.Encontrado, nombre: 'Galletas' });
+    fixture.detectChanges();
+    expect(fixture.nativeElement.textContent).not.toContain('::Warnings:');
   });
 });

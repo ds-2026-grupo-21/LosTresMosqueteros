@@ -39,6 +39,7 @@
           <dt>Nutri-Score</dt><dd>{{ product.nutriScore || ('::Catalog:Unavailable' | abpLocalization) }}</dd>
           <dt>NOVA</dt><dd>{{ product.grupoNova ?? ('::Catalog:Unavailable' | abpLocalization) }}</dd>
         </dl>
+        <app-food-warnings [warnings]="product.advertencias" [showFooter]="false" />
       }
     }
   }
