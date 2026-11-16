@@ -105,9 +105,26 @@ public class FoodPreferenceComparerTests
     [Fact]
     public void Un_texto_que_no_se_puede_interpretar_es_no_verificable()
     {
-        var result = FoodPreferenceComparer.Compare(new[] { "Leche" }, "牛奶", "en:gluten");
+        var result = FoodPreferenceComparer.Compare(new[] { "Leche" }, "!!!", "en:gluten");
 
         result.Unverifiable.ShouldBe(new[] { FoodField.Ingredients });
+    }
+
+    [Fact]
+    public void Conserva_letras_unicode_y_no_compara_fragmentos()
+    {
+        var chinese = FoodPreferenceComparer.Compare(new[] { "大豆" }, "含有大豆", "zh:大豆");
+        chinese.HasPreferences.ShouldBeTrue();
+        chinese.Matches.ShouldContain(new FoodMatch("大豆", FoodField.Allergens));
+        FoodPreferenceComparer.Compare(new[] { "œuf" }, "uf", "en:milk").HasMatches.ShouldBeFalse();
+    }
+
+    [Fact]
+    public void Preferencia_no_interpretable_no_se_presenta_como_ausente_o_verificada()
+    {
+        var result = FoodPreferenceComparer.Compare(new[] { "!!!" }, "Leche", "en:milk");
+        result.HasPreferences.ShouldBeTrue();
+        result.Unverifiable.ShouldBe(new[] { FoodField.Ingredients, FoodField.Allergens });
     }
 
     [Fact]

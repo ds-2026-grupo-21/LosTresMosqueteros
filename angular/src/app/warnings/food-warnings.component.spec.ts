@@ -102,6 +102,7 @@ describe('FoodWarningsComponent', () => {
       warnings: { hasPreferences: true, showAlerts: true, matches: [], unverifiable: [FoodField.Ingredients, FoodField.Allergens] },
     });
     expect(text).toContain('::Warnings:Unverifiable');
+    expect(text).not.toContain('::Warnings:NoMatches');
     expect(text).toContain('::Warnings:Field:Ingredients');
     expect(text).toContain('::Warnings:Field:Allergens');
   });

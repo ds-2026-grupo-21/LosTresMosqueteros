@@ -8,6 +8,7 @@ import { RouterLink } from '@angular/router';
 import { PantryService } from '@proxy/pantry';
 import { QUANTITY_MAX, UNIT_MAX_LENGTH, validDate, maxTwoDecimals } from '../pantry/pantry-edit-modal/pantry-edit-modal.component';
 import { FoodWarningsComponent } from '../warnings/food-warnings.component';
+import { FoodWarningDto } from '@proxy/preferences';
 
 type State = 'idle' | 'loading' | 'results' | 'detail' | 'empty' | 'notFound' | 'rate' | 'error' | 'invalid';
 type Request = { kind: 'search'; text: string; page: number } | { kind: 'detail'; code: string };
@@ -36,6 +37,8 @@ export class CatalogComponent {
   readonly addOpen = signal(false);
   readonly adding = signal(false);
   readonly savedProductId = signal<string | null>(null);
+  readonly actionWarnings = signal<FoodWarningDto | null>(null);
+  readonly actionEvaluated = signal(false);
   readonly addMessage = signal<'saved' | 'saveError' | 'addError' | null>(null);
   readonly addForm = this.fb.group({
     quantity: this.fb.control<number | null>(null, [Validators.min(0), Validators.max(QUANTITY_MAX), maxTwoDecimals]),
@@ -85,6 +88,8 @@ export class CatalogComponent {
     this.saveMessage.set(null);
     this.addOpen.set(false);
     this.savedProductId.set(null);
+    this.actionWarnings.set(null);
+    this.actionEvaluated.set(false);
     this.addMessage.set(null);
     this.addForm.reset();
     if (!/^\d{8,14}$/.test(code)) { this.cancel.next(); this.state.set('invalid'); return; }
@@ -116,7 +121,8 @@ export class CatalogComponent {
           if (result.resultado === ResultadoConsultaExterna.Encontrado && result.producto?.id) {
             this.savedProductId.set(result.producto.id);
             this.saveMessage.set('saved');
-            this.detail.update(current => current ? { ...current, advertencias: result.advertencias } : current);
+            this.actionWarnings.set(result.advertencias ?? null);
+            this.actionEvaluated.set(true);
           } else if (result.resultado === ResultadoConsultaExterna.NoEncontrado) this.saveMessage.set('notFound');
           else if (result.resultado === ResultadoConsultaExterna.LimiteDeSolicitudesExcedido) this.saveMessage.set('rate');
           else this.saveMessage.set('error');
@@ -145,7 +151,8 @@ export class CatalogComponent {
         .subscribe({
           next: item => {
             this.adding.set(false); this.addMessage.set('saved'); this.addOpen.set(false);
-            this.detail.update(current => current ? { ...current, advertencias: item.advertencias } : current);
+            this.actionWarnings.set(item.advertencias ?? null);
+            this.actionEvaluated.set(true);
           },
           error: () => { this.adding.set(false); this.addMessage.set('addError'); },
         });
@@ -160,7 +167,8 @@ export class CatalogComponent {
             this.adding.set(false); this.addMessage.set('saveError'); return;
           }
           this.savedProductId.set(result.producto.id);
-          this.detail.update(current => current ? { ...current, advertencias: result.advertencias } : current);
+          this.actionWarnings.set(result.advertencias ?? null);
+          this.actionEvaluated.set(true);
           create(result.producto.id);
         },
         error: () => { this.adding.set(false); this.addMessage.set('saveError'); },

@@ -2,6 +2,8 @@
   "culture": "es",
   "texts": {
     "AppName": "LosTresMosqueteros",
+    "Catalog:StoredWarnings": "Advertencias del producto guardado",
+    "Catalog:StoredWarningsExplanation": "Esta comparación usa los datos guardados, que pueden diferir del detalle externo mostrado arriba.",
     "Catalog:SaveProduct": "Guardar producto",
     "Catalog:SavingProduct": "Guardando producto...",
     "Catalog:SaveResult:saved": "Producto guardado.",

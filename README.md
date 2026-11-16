@@ -17,13 +17,14 @@ Aplicación con backend ABP en capas (.NET 10), SQL Server y frontend Angular 22
 | Ingreso y perfil | Autenticación de ABP y edición de nombre y correo en `/account/manage`. |
 | Mi despensa | Listado paginado, edición de cantidad/unidad/vencimiento, consumo y eliminación con confirmación en `/pantry`. |
 | Preferencias | Ingredientes o alérgenos a vigilar, opción de alertas y foto opcional en `/preferences`. |
-| Catálogo externo | Consulta por código, búsqueda por texto paginada y detalle mediante la API propia. |
-| Guardado de productos | Guardado por código y recuperación interna sin duplicados, separado de crear un ítem de despensa. |
+| Catálogo externo | Consulta por código, búsqueda por texto paginada y detalle en `/catalog`, mediante la API propia. |
+| Guardado de productos | Guardado por código y agregado a la despensa desde el detalle, sin duplicar el producto interno. |
+| Advertencias alimentarias | Comparación informativa con las preferencias del usuario al consultar, guardar o agregar un producto. |
 | Vencimientos | Worker que registra advertencias con un umbral de tres días y fecha de referencia UTC. |
 
 Las operaciones propias requieren autenticación. Despensa y preferencias obtienen el propietario de la sesión; un ítem ajeno responde 404. Los textos de las pantallas están disponibles en español e inglés.
 
-Las pantallas de búsqueda/detalle y guardado del catálogo, y la comparación de preferencias con productos para mostrar advertencias, corresponden al siguiente incremento. La opción de alertas se persiste, pero todavía no controla esas advertencias.
+En el detalle se informa la fuente externa y que la evaluación no constituye consejo médico. La opción de alertas controla la presentación personalizada; la ausencia de información se informa por separado.
 
 ## Requisitos
 
@@ -90,6 +91,7 @@ Las pantallas de búsqueda/detalle y guardado del catálogo, y la comparación d
 - **Fechas:** el vencimiento es una fecha sin hora. El worker usa el día UTC, que puede diferir del día local cerca de medianoche.
 - **Catálogo y guardado:** se conservan los datos ausentes. Guardar un código existente devuelve el mismo identificador. Consultar el catálogo no guarda productos y guardar un producto no crea un ítem de despensa.
 - **Preferencias:** hasta 50 entradas de 100 caracteres, sin vacíos ni repetidos por mayúsculas o acentos. Foto opcional PNG/JPEG válida, de hasta 80000 bytes, una imagen estática y hasta 16 megapíxeles.
+- **Advertencias:** se calculan al consultar, guardar y agregar, con las preferencias de la sesión. Se comparan palabras completas sin distinguir mayúsculas ni acentos; no se traducen ni se infieren equivalencias. Si faltan datos o no se pueden interpretar, se informa que no son verificables. El detalle del proveedor y el producto guardado pueden tener datos diferentes; sus advertencias se muestran por separado.
 
 Los proxies están en `angular/src/app/proxy`. Si cambian los contratos, regenerarlos desde `angular` con el backend iniciado:
 
@@ -122,6 +124,7 @@ La suite utiliza proveedores externos simulados y bases aisladas. Las pruebas co
 
 - [Catálogo externo: contratos, paginación y comprobaciones](docs/TP11-Catalogo.md).
 - [Integración: guardado, preferencias, migraciones y resultados](docs/TP11-Integracion.md).
+- [Catálogo y advertencias alimentarias](docs/Catalogo-y-advertencias.md).
 - [Wiki del proyecto](https://github.com/ds-2026-grupo-21/LosTresMosqueteros/wiki).
 - [Issue del incremento](https://github.com/ds-2026-grupo-21/LosTresMosqueteros/issues/30).
 

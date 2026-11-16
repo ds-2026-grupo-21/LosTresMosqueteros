@@ -13,7 +13,7 @@
       </div>
     } @else if (!hasPreferences()) {
       <p class="alert alert-info" role="status">{{ '::Warnings:NoPreferences' | abpLocalization }}</p>
-    } @else {
+    } @else if (!unverifiable().length) {
       <p class="alert alert-info" role="status">{{ '::Warnings:NoMatches' | abpLocalization }}</p>
     }
   }

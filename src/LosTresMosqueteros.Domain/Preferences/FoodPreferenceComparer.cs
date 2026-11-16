@@ -17,8 +17,8 @@ namespace LosTresMosqueteros.Preferences;
 /// </summary>
 public static class FoodPreferenceComparer
 {
-    private static readonly Regex LanguagePrefix = new(@"\b[a-z]{2,3}:(?=[a-z0-9])", RegexOptions.Compiled);
-    private static readonly Regex NonAlphanumeric = new(@"[^a-z0-9]+", RegexOptions.Compiled);
+    private static readonly Regex LanguagePrefix = new(@"\b[a-z]{2,3}:(?=[\p{L}\p{N}])", RegexOptions.Compiled);
+    private static readonly Regex NonAlphanumeric = new(@"[^\p{L}\p{N}]+", RegexOptions.Compiled);
 
     public static FoodComparisonResult Compare(
         IEnumerable<string?>? preferences,
@@ -27,11 +27,16 @@ public static class FoodPreferenceComparer
     {
         var wanted = new List<(string Display, string Key)>();
         var seen = new HashSet<string>();
+        var hasPreferences = false;
+        var hasUninterpretablePreference = false;
 
         foreach (var raw in preferences ?? Enumerable.Empty<string?>())
         {
             var display = WatchedItem.Clean(raw);
+            if (display.Length == 0) continue;
+            hasPreferences = true;
             var key = Tokenize(display);
+            if (key.Length == 0) hasUninterpretablePreference = true;
 
             // Una entrada que no se puede interpretar o repetida no genera comparación.
             if (key.Length > 0 && seen.Add(key))
@@ -47,7 +52,8 @@ public static class FoodPreferenceComparer
         };
 
         // Un dato ausente o ilegible es "no verificable", nunca "sin riesgo".
-        var unverifiable = fields.Where(x => x.Text.Length == 0).Select(x => x.Field).ToList();
+        var unverifiable = fields.Where(x => x.Text.Length == 0 || hasUninterpretablePreference)
+            .Select(x => x.Field).ToList();
 
         var matches = new List<FoodMatch>();
         foreach (var (display, key) in wanted)
@@ -61,7 +67,7 @@ public static class FoodPreferenceComparer
             }
         }
 
-        return new FoodComparisonResult(wanted.Count > 0, matches, unverifiable);
+        return new FoodComparisonResult(hasPreferences, matches, unverifiable);
     }
 
     private static string Tokenize(string? value)

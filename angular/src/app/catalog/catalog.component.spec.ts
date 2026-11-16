@@ -54,6 +54,29 @@ describe('CatalogComponent', () => {
     c.saveProduct(); expect(c.saveMessage()).toBe('notFound');
   });
 
+  it('mantiene separadas las advertencias externas y las del producto guardado', () => {
+    const c = fixture.componentInstance;
+    const external = { hasPreferences: true, showAlerts: true, matches: [{ preference: 'Leche', field: FoodField.Ingredients }], unverifiable: [] };
+    const stored = { hasPreferences: true, showAlerts: true, matches: [], unverifiable: [] };
+    c.open('00000001');
+    details[0].next({ resultado: ResultadoConsultaExterna.Encontrado, codigoBarras: '00000001', ingredientes: 'Leche', advertencias: external });
+    saveService.save.mockReturnValue(of({ resultado: ResultadoConsultaExterna.Encontrado, producto: { id: '123' }, advertencias: stored }));
+    c.saveProduct(); fixture.detectChanges();
+    expect(c.detail()?.advertencias).toEqual(external);
+    expect(c.actionWarnings()).toEqual(stored);
+    expect(fixture.nativeElement.textContent).toContain('::Catalog:StoredWarningsExplanation');
+    expect(fixture.nativeElement.textContent).toContain('::Warnings:MatchTitle');
+    expect(fixture.nativeElement.textContent).toContain('::Warnings:NoMatches');
+  });
+
+  it('avisa si la respuesta de guardado carece de evaluación', () => {
+    const c = fixture.componentInstance;
+    c.open('00000001'); details[0].next({ resultado: ResultadoConsultaExterna.Encontrado, codigoBarras: '00000001' });
+    saveService.save.mockReturnValue(of({ resultado: ResultadoConsultaExterna.Encontrado, producto: { id: '123' } }));
+    c.saveProduct(); fixture.detectChanges();
+    expect(fixture.nativeElement.textContent).toContain('::Warnings:EvaluationError');
+  });
+
   it('guarda primero y agrega una sola vez con los datos opcionales', () => {
     const c = fixture.componentInstance;
     c.open('00000001'); details[0].next({ resultado: ResultadoConsultaExterna.Encontrado, codigoBarras: '00000001' });

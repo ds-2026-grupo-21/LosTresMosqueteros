@@ -67,6 +67,11 @@
         @if (saveMessage(); as message) {
           <p [attr.role]="message === 'saved' ? 'status' : 'alert'">{{ ('::Catalog:SaveResult:' + message) | abpLocalization }}</p>
         }
+        @if (actionEvaluated()) {
+          <h3>{{ '::Catalog:StoredWarnings' | abpLocalization }}</h3>
+          <p>{{ '::Catalog:StoredWarningsExplanation' | abpLocalization }}</p>
+          <app-food-warnings [warnings]="actionWarnings()" [failed]="!actionWarnings()" [showFooter]="false" />
+        }
       }
     }
   }
