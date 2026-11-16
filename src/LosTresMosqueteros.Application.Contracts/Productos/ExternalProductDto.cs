@@ -1,4 +1,5 @@
 ﻿using System.Collections.Generic;
+using LosTresMosqueteros.Preferences;
 
 namespace LosTresMosqueteros.Productos;
 
@@ -22,4 +23,6 @@ public class ExternalProductDto
     public List<string>? Alergenos { get; set; }
     public string? NutriScore { get; set; }
     public int? GrupoNova { get; set; }
+    /// <summary>Evaluación personal del usuario actual. Se calcula al momento; no viene del proveedor.</summary>
+    public FoodWarningDto? Advertencias { get; set; }
 }

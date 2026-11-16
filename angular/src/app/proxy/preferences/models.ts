@@ -1,3 +1,16 @@
+import type { FoodField } from './food-field.enum';
+
+export interface FoodWarningDto {
+  hasPreferences?: boolean;
+  showAlerts?: boolean;
+  matches?: FoodWarningMatchDto[];
+  unverifiable?: FoodField[];
+}
+
+export interface FoodWarningMatchDto {
+  preference?: string;
+  field?: FoodField;
+}
 
 export interface UpdateUserPreferenceDto {
   showAlerts?: boolean;

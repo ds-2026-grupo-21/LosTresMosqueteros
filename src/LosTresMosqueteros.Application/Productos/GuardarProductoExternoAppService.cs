@@ -1,6 +1,7 @@
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 using System.Threading.Tasks;
+using LosTresMosqueteros.Preferences;
 using Microsoft.AspNetCore.Authorization;
 using Volo.Abp.Validation;
 using Volo.Abp.Guids;
@@ -15,14 +16,16 @@ public class GuardarProductoExternoAppService : LosTresMosqueterosAppService, IG
     private readonly IExternalProductCatalogClient _catalog;
     private readonly IGuidGenerator _guids;
     private readonly IObjectMapper _mapper;
+    private readonly IFoodWarningEvaluator _warnings;
 
     public GuardarProductoExternoAppService(IProductoRepository repository, IExternalProductCatalogClient catalog,
-        IGuidGenerator guids, IObjectMapper mapper)
+        IGuidGenerator guids, IObjectMapper mapper, IFoodWarningEvaluator warnings)
     {
         _repository = repository;
         _catalog = catalog;
         _guids = guids;
         _mapper = mapper;
+        _warnings = warnings;
     }
 
     public async Task<GuardarProductoExternoResultadoDto> SaveAsync(ConsultarProductoExternoDto input)
@@ -32,7 +35,7 @@ public class GuardarProductoExternoAppService : LosTresMosqueterosAppService, IG
             throw new AbpValidationException("El código no es válido.", errores);
 
         var existente = await _repository.FindAsync(x => x.CodigoBarras == input.CodigoBarras);
-        if (existente != null) return Resultado(existente);
+        if (existente != null) return await ResultadoAsync(existente);
 
         var externo = await _catalog.GetByBarcodeAsync(input.CodigoBarras);
         if (externo == null) return new() { Resultado = ResultadoConsultaExterna.NoEncontrado };
@@ -45,12 +48,15 @@ public class GuardarProductoExternoAppService : LosTresMosqueterosAppService, IG
             externo.Nombre, externo.Marca, externo.ImagenUrl, externo.Categorias, externo.Ingredientes,
             externo.Alergenos is { Count: > 0 } ? string.Join(", ", externo.Alergenos) : null,
             externo.NutriScore, externo.GrupoNova);
-        return Resultado(await _repository.InsertarUnicoAsync(producto, devolverExistente: true));
+        return await ResultadoAsync(await _repository.InsertarUnicoAsync(producto, devolverExistente: true));
     }
 
-    private GuardarProductoExternoResultadoDto Resultado(Producto producto) => new()
+    // La evaluación usa los datos del producto ya guardado (nuevo o existente), sin consultas externas extra,
+    // y las preferencias actuales del usuario de la sesión. No se persiste.
+    private async Task<GuardarProductoExternoResultadoDto> ResultadoAsync(Producto producto) => new()
     {
         Resultado = ResultadoConsultaExterna.Encontrado,
-        Producto = _mapper.Map<Producto, ProductoDto>(producto)
+        Producto = _mapper.Map<Producto, ProductoDto>(producto),
+        Advertencias = await _warnings.EvaluateAsync(producto.Ingredientes, producto.Alergenos)
     };
 }

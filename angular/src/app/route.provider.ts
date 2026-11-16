@@ -9,6 +9,13 @@ function configureRoutes() {
   const routes = inject(RoutesService);
   routes.add([
       {
+        path: '/catalog',
+        name: '::Catalog:Title',
+        iconClass: 'fas fa-search',
+        order: 4,
+        layout: eLayoutType.application,
+      },
+      {
         path: '/preferences',
         name: '::Preferences:Title',
         iconClass: 'fas fa-sliders',

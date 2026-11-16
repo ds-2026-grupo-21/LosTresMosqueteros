@@ -10,7 +10,7 @@ import { PantryItemDto, PantryService, UpdatePantryItemDto } from '@proxy/pantry
 export const UNIT_MAX_LENGTH = 50;
 export const QUANTITY_MAX = 999999999999.99;
 
-function validDate(control: AbstractControl): ValidationErrors | null {
+export function validDate(control: AbstractControl): ValidationErrors | null {
   const value = control.value as string | null;
   if (!value) return null;
   const parts = /^(\d{4})-(\d{2})-(\d{2})$/.exec(value);
@@ -23,7 +23,7 @@ function validDate(control: AbstractControl): ValidationErrors | null {
     ? null : { invalidDate: true };
 }
 
-function maxTwoDecimals(control: AbstractControl): ValidationErrors | null {
+export function maxTwoDecimals(control: AbstractControl): ValidationErrors | null {
   const value = control.value as number | null;
   if (value === null || value === undefined) return null;
   const [mantissa, exponentText = '0'] = value.toString().toLowerCase().split('e');

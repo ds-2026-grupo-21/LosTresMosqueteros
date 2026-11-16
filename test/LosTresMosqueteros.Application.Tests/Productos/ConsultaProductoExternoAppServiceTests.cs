@@ -1,4 +1,5 @@
 using System.Threading.Tasks;
+using LosTresMosqueteros.Preferences;
 using NSubstitute;
 using Shouldly;
 using Xunit;
@@ -9,13 +10,18 @@ public class ConsultaProductoExternoAppServiceTests
 {
     private const string CodigoBarras = "7791234567890";
     private readonly IExternalProductCatalogClient _catalogClient;
+    private readonly IFoodWarningEvaluator _warnings;
     private readonly ConsultaProductoExternoAppService _appService;
 
     public ConsultaProductoExternoAppServiceTests()
     {
         _catalogClient = Substitute.For<IExternalProductCatalogClient>();
+        _warnings = Substitute.For<IFoodWarningEvaluator>();
+        _warnings.EvaluateAsync(Arg.Any<string?>(), Arg.Any<string?>())
+            .Returns(Task.FromResult(new FoodWarningDto { HasPreferences = false }));
+
         _appService = new ConsultaProductoExternoAppService(
-            _catalogClient, Substitute.For<IExternalProductSearchClient>());
+            _catalogClient, Substitute.For<IExternalProductSearchClient>(), _warnings);
     }
 
     [Fact]
@@ -50,6 +56,28 @@ public class ConsultaProductoExternoAppServiceTests
     }
 
     [Fact]
+    public async Task Deberia_Adjuntar_Las_Advertencias_Con_Los_Datos_Ya_Obtenidos()
+    {
+        var advertencias = new FoodWarningDto { HasPreferences = true };
+        _warnings.EvaluateAsync("Leche", "en:milk").Returns(Task.FromResult(advertencias));
+
+        var producto = new ExternalProductDto
+        {
+            Resultado = ResultadoConsultaExterna.Encontrado,
+            CodigoBarras = CodigoBarras,
+            Ingredientes = "Leche",
+            Alergenos = new() { "en:milk" }
+        };
+
+        var resultado = await ConsultarAsync(producto);
+
+        resultado.Advertencias.ShouldBeSameAs(advertencias);
+        await _warnings.Received(1).EvaluateAsync("Leche", "en:milk");
+        // El objeto del proveedor no se modifica con datos personales.
+        producto.Advertencias.ShouldBeNull();
+    }
+
+    [Fact]
     public async Task Deberia_Devolver_NoEncontrado_Cuando_El_Cliente_Devuelve_Null()
     {
         var resultado = await ConsultarAsync(null);
@@ -59,6 +87,8 @@ public class ConsultaProductoExternoAppServiceTests
         resultado.Nombre.ShouldBeNull();
         resultado.Marca.ShouldBeNull();
         resultado.ImagenUrl.ShouldBeNull();
+        resultado.Advertencias.ShouldBeNull();
+        await _warnings.DidNotReceiveWithAnyArgs().EvaluateAsync(default, default);
     }
 
     [Fact]
@@ -77,6 +107,7 @@ public class ConsultaProductoExternoAppServiceTests
         resultado.Nombre.ShouldBeNull();
         resultado.Marca.ShouldBeNull();
         resultado.ImagenUrl.ShouldBeNull();
+        await _warnings.Received(1).EvaluateAsync(null, null);
     }
 
     [Fact]
@@ -94,6 +125,7 @@ public class ConsultaProductoExternoAppServiceTests
         resultado.Nombre.ShouldBeNull();
         resultado.Marca.ShouldBeNull();
         resultado.ImagenUrl.ShouldBeNull();
+        await _warnings.DidNotReceiveWithAnyArgs().EvaluateAsync(default, default);
     }
 
     [Fact]
@@ -111,6 +143,7 @@ public class ConsultaProductoExternoAppServiceTests
         resultado.Nombre.ShouldBeNull();
         resultado.Marca.ShouldBeNull();
         resultado.ImagenUrl.ShouldBeNull();
+        await _warnings.DidNotReceiveWithAnyArgs().EvaluateAsync(default, default);
     }
 
     private async Task<ExternalProductDto> ConsultarAsync(ExternalProductDto? respuesta)

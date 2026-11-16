@@ -1,4 +1,5 @@
 import type { ResultadoConsultaExterna } from './resultado-consulta-externa.enum';
+import type { FoodWarningDto } from '../preferences/models';
 import type { FullAuditedEntityDto } from '@abp/ng.core';
 
 export interface BuscarProductosExternosDto {
@@ -29,6 +30,7 @@ export interface ExternalProductDto {
   alergenos?: string[] | null;
   nutriScore?: string | null;
   grupoNova?: number | null;
+  advertencias?: FoodWarningDto | null;
 }
 
 export interface ExternalProductSearchResultDto {
@@ -51,6 +53,7 @@ export interface ExternalProductSummaryDto {
 export interface GuardarProductoExternoResultadoDto {
   resultado?: ResultadoConsultaExterna;
   producto?: ProductoDto | null;
+  advertencias?: FoodWarningDto | null;
 }
 
 export interface ProductoDto extends FullAuditedEntityDto<string> {
