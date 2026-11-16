@@ -1,9 +1,11 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { Pipe, PipeTransform } from '@angular/core';
 import { ReactiveFormsModule } from '@angular/forms';
+import { provideRouter, RouterLink } from '@angular/router';
+import { PantryService } from '@proxy/pantry';
 import { FoodField } from '@proxy/preferences';
-import { ConsultaProductoExternoService, ExternalProductDto, ExternalProductSearchResultDto, ResultadoConsultaExterna } from '@proxy/productos';
-import { Subject } from 'rxjs';
+import { ConsultaProductoExternoService, GuardarProductoExternoService, ExternalProductDto, ExternalProductSearchResultDto, ResultadoConsultaExterna } from '@proxy/productos';
+import { Subject, of, throwError } from 'rxjs';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { FoodWarningsComponent } from '../warnings/food-warnings.component';
 import { CatalogComponent } from './catalog.component';
@@ -16,18 +18,75 @@ describe('CatalogComponent', () => {
   let searches: Subject<ExternalProductSearchResultDto>[];
   let details: Subject<ExternalProductDto>[];
   let service: { search: ReturnType<typeof vi.fn>; get: ReturnType<typeof vi.fn> };
+  let saveService: { save: ReturnType<typeof vi.fn> };
+  let pantry: { create: ReturnType<typeof vi.fn> };
   beforeEach(() => {
     searches = []; details = [];
+    pantry = { create: vi.fn() };
+    saveService = { save: vi.fn() };
     service = {
       search: vi.fn(() => { const value = new Subject<ExternalProductSearchResultDto>(); searches.push(value); return value; }),
       get: vi.fn(() => { const value = new Subject<ExternalProductDto>(); details.push(value); return value; }),
     };
-    TestBed.configureTestingModule({ imports: [CatalogComponent], providers: [{ provide: ConsultaProductoExternoService, useValue: service }] });
-    TestBed.overrideComponent(CatalogComponent, { set: { imports: [TestLocalizationPipe, ReactiveFormsModule, FoodWarningsComponent] } });
+    TestBed.configureTestingModule({ imports: [CatalogComponent], providers: [provideRouter([]), { provide: PantryService, useValue: pantry }, { provide: ConsultaProductoExternoService, useValue: service }, { provide: GuardarProductoExternoService, useValue: saveService }] });
+    TestBed.overrideComponent(CatalogComponent, { set: { imports: [TestLocalizationPipe, ReactiveFormsModule, FoodWarningsComponent, RouterLink] } });
     TestBed.overrideComponent(FoodWarningsComponent, { set: { imports: [TestLocalizationPipe] } });
     fixture = TestBed.createComponent(CatalogComponent); fixture.detectChanges();
   });
   afterEach(() => TestBed.resetTestingModule());
+
+  it('guarda el código del detalle y muestra el resultado sin crear un ítem', () => {
+    const c = fixture.componentInstance;
+    c.open('00000001'); details[0].next({ resultado: ResultadoConsultaExterna.Encontrado, codigoBarras: '00000001' });
+    const pending = new Subject<any>(); saveService.save.mockReturnValue(pending);
+    c.saveProduct(); c.saveProduct();
+    expect(saveService.save).toHaveBeenCalledTimes(1);
+    expect(saveService.save.mock.calls[0][0]).toEqual({ codigoBarras: '00000001' });
+    pending.next({ resultado: ResultadoConsultaExterna.Encontrado, producto: { id: '123' } });
+    expect(c.saveMessage()).toBe('saved'); expect(c.saving()).toBe(false);
+  });
+
+  it('permite reintentar cuando falla el guardado', () => {
+    const c = fixture.componentInstance;
+    c.open('00000001'); details[0].next({ resultado: ResultadoConsultaExterna.Encontrado, codigoBarras: '00000001' });
+    saveService.save.mockReturnValueOnce(throwError(() => new Error())).mockReturnValueOnce(of({ resultado: ResultadoConsultaExterna.NoEncontrado }));
+    c.saveProduct(); expect(c.saveMessage()).toBe('error');
+    c.saveProduct(); expect(c.saveMessage()).toBe('notFound');
+  });
+
+  it('guarda primero y agrega una sola vez con los datos opcionales', () => {
+    const c = fixture.componentInstance;
+    c.open('00000001'); details[0].next({ resultado: ResultadoConsultaExterna.Encontrado, codigoBarras: '00000001' });
+    const saved = new Subject<any>(); const added = new Subject<any>();
+    saveService.save.mockReturnValue(saved); pantry.create.mockReturnValue(added);
+    c.showAdd(); c.addForm.patchValue({ quantity: 2.5, unit: ' kg ', expirationDate: '2026-12-01' });
+    c.addProduct(); c.addProduct(); expect(saveService.save).toHaveBeenCalledTimes(1); expect(pantry.create).not.toHaveBeenCalled();
+    saved.next({ resultado: ResultadoConsultaExterna.Encontrado, producto: { id: 'id-1' } });
+    expect(pantry.create).toHaveBeenCalledWith({ productId: 'id-1', quantity: 2.5, unit: 'kg', expirationDate: '2026-12-01' }, expect.anything());
+    added.next({ id: 'item-1' }); expect(c.addMessage()).toBe('saved');
+  });
+  it('conserva el formulario y reutiliza el producto si falla el agregado', () => {
+    const c = fixture.componentInstance;
+    c.open('00000001'); details[0].next({ resultado: ResultadoConsultaExterna.Encontrado, codigoBarras: '00000001' });
+    saveService.save.mockReturnValue(of({ resultado: ResultadoConsultaExterna.Encontrado, producto: { id: 'id-1' } }));
+    pantry.create.mockReturnValueOnce(throwError(() => new Error())).mockReturnValueOnce(of({ id: 'item-1' }));
+    c.showAdd(); c.addForm.patchValue({ quantity: 3 }); c.addProduct();
+    expect(c.addMessage()).toBe('addError'); expect(c.addForm.value.quantity).toBe(3);
+    c.addProduct(); expect(saveService.save).toHaveBeenCalledTimes(1); expect(c.addMessage()).toBe('saved');
+  });
+  it('rechaza valores inválidos y cancelar no crea ítems', () => {
+    const c = fixture.componentInstance;
+    c.open('00000001'); details[0].next({ resultado: ResultadoConsultaExterna.Encontrado, codigoBarras: '00000001' });
+    c.showAdd(); c.addForm.patchValue({ quantity: -1 }); c.addProduct();
+    expect(saveService.save).not.toHaveBeenCalled(); expect(pantry.create).not.toHaveBeenCalled();
+    c.cancelAdd(); expect(c.addOpen()).toBe(false);
+  });
+  it('no crea un ítem si falla el guardado del producto', () => {
+    const c = fixture.componentInstance;
+    c.open('00000001'); details[0].next({ resultado: ResultadoConsultaExterna.Encontrado, codigoBarras: '00000001' });
+    saveService.save.mockReturnValue(of({ resultado: ResultadoConsultaExterna.ServicioNoDisponible }));
+    c.showAdd(); c.addProduct(); expect(c.addMessage()).toBe('saveError'); expect(pantry.create).not.toHaveBeenCalled();
+  });
 
   it('envía los formularios sin navegar ni recargar la página', () => {
     const c = fixture.componentInstance;

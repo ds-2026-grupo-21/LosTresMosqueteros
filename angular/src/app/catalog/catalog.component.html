@@ -40,6 +40,33 @@
           <dt>NOVA</dt><dd>{{ product.grupoNova ?? ('::Catalog:Unavailable' | abpLocalization) }}</dd>
         </dl>
         <app-food-warnings [warnings]="product.advertencias" [showFooter]="false" />
+        <button class="btn btn-primary" type="button" [disabled]="saving() || adding() || !product.codigoBarras" (click)="saveProduct()">{{ '::Catalog:SaveProduct' | abpLocalization }}</button>
+        <button class="btn btn-outline-primary ms-2" type="button" [disabled]="saving() || adding() || !product.codigoBarras" (click)="showAdd()">{{ '::Catalog:AddToPantry' | abpLocalization }}</button>
+        @if (addOpen()) {
+          <form [formGroup]="addForm" (ngSubmit)="addProduct()" novalidate>
+            <h3>{{ '::Catalog:AddTitle' | abpLocalization }}</h3>
+            <label for="add-quantity">{{ '::Pantry:Quantity' | abpLocalization }}</label>
+            <input id="add-quantity" class="form-control" type="number" min="0" step="any" formControlName="quantity">
+            @if (addForm.controls.quantity.touched && addForm.controls.quantity.invalid) { <p role="alert">{{ '::Catalog:QuantityError' | abpLocalization }}</p> }
+            <label for="add-unit">{{ '::Pantry:Unit' | abpLocalization }}</label>
+            <input id="add-unit" class="form-control" type="text" formControlName="unit">
+            @if (addForm.controls.unit.touched && addForm.controls.unit.invalid) { <p role="alert">{{ '::Pantry:UnitTooLong' | abpLocalization }}</p> }
+            <label for="add-date">{{ '::Pantry:ExpirationDate' | abpLocalization }}</label>
+            <input id="add-date" class="form-control" type="date" formControlName="expirationDate">
+            @if (addForm.controls.expirationDate.touched && addForm.controls.expirationDate.invalid) { <p role="alert">{{ '::Pantry:DateInvalid' | abpLocalization }}</p> }
+            <button type="submit" class="btn btn-primary" [disabled]="adding()">{{ '::Catalog:ConfirmAdd' | abpLocalization }}</button>
+            <button type="button" class="btn btn-secondary" [disabled]="adding()" (click)="cancelAdd()">{{ '::Pantry:Cancel' | abpLocalization }}</button>
+          </form>
+        }
+        @if (adding()) { <p role="status">{{ '::Catalog:Adding' | abpLocalization }}</p> }
+        @if (addMessage(); as message) {
+          <p [attr.role]="message === 'saved' ? 'status' : 'alert'">{{ ('::Catalog:AddResult:' + message) | abpLocalization }}</p>
+          @if (message === 'saved' || message === 'addError') { <a routerLink="/pantry">{{ '::Catalog:GoToPantry' | abpLocalization }}</a> }
+        }
+        @if (saving()) { <p role="status">{{ '::Catalog:SavingProduct' | abpLocalization }}</p> }
+        @if (saveMessage(); as message) {
+          <p [attr.role]="message === 'saved' ? 'status' : 'alert'">{{ ('::Catalog:SaveResult:' + message) | abpLocalization }}</p>
+        }
       }
     }
   }

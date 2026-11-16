@@ -1,9 +1,12 @@
 import { LocalizationPipe } from '@abp/ng.core';
 import { ChangeDetectionStrategy, Component, DestroyRef, inject, signal } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
-import { FormControl, ReactiveFormsModule } from '@angular/forms';
+import { FormBuilder, FormControl, ReactiveFormsModule, Validators } from '@angular/forms';
 import { Observable, Subject, catchError, map, of, switchMap, takeUntil } from 'rxjs';
-import { ConsultaProductoExternoService, ExternalProductDto, ExternalProductSearchResultDto, ResultadoConsultaExterna } from '@proxy/productos';
+import { ConsultaProductoExternoService, GuardarProductoExternoService, ExternalProductDto, ExternalProductSearchResultDto, ResultadoConsultaExterna } from '@proxy/productos';
+import { RouterLink } from '@angular/router';
+import { PantryService } from '@proxy/pantry';
+import { QUANTITY_MAX, UNIT_MAX_LENGTH, validDate, maxTwoDecimals } from '../pantry/pantry-edit-modal/pantry-edit-modal.component';
 import { FoodWarningsComponent } from '../warnings/food-warnings.component';
 
 type State = 'idle' | 'loading' | 'results' | 'detail' | 'empty' | 'notFound' | 'rate' | 'error' | 'invalid';
@@ -11,13 +14,16 @@ type Request = { kind: 'search'; text: string; page: number } | { kind: 'detail'
 
 @Component({
   selector: 'app-catalog',
-    imports: [LocalizationPipe, ReactiveFormsModule, FoodWarningsComponent],
+    imports: [LocalizationPipe, ReactiveFormsModule, FoodWarningsComponent, RouterLink],
   templateUrl: './catalog.component.html',
   styleUrl: './catalog.component.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class CatalogComponent {
   private readonly service = inject(ConsultaProductoExternoService);
+  private readonly pantry = inject(PantryService);
+  private readonly fb = inject(FormBuilder);
+  private readonly saveService = inject(GuardarProductoExternoService);
   private readonly destroyRef = inject(DestroyRef);
   private readonly requests = new Subject<Request>();
   private readonly cancel = new Subject<void>();
@@ -27,6 +33,17 @@ export class CatalogComponent {
   readonly results = signal<ExternalProductSearchResultDto | null>(null);
   readonly detail = signal<ExternalProductDto | null>(null);
   readonly imageFailed = signal(false);
+  readonly addOpen = signal(false);
+  readonly adding = signal(false);
+  readonly savedProductId = signal<string | null>(null);
+  readonly addMessage = signal<'saved' | 'saveError' | 'addError' | null>(null);
+  readonly addForm = this.fb.group({
+    quantity: this.fb.control<number | null>(null, [Validators.min(0), Validators.max(QUANTITY_MAX), maxTwoDecimals]),
+    unit: this.fb.control<string | null>(null, [Validators.maxLength(UNIT_MAX_LENGTH)]),
+    expirationDate: this.fb.control<string | null>(null, [validDate]),
+  });
+  readonly saving = signal(false);
+  readonly saveMessage = signal<'saved' | 'notFound' | 'rate' | 'error' | null>(null);
   private lastRequest: Request | null = null;
   private searchText = '';
 
@@ -56,6 +73,7 @@ export class CatalogComponent {
   }
 
   search(): void {
+    if (this.saving() || this.adding()) return;
     const text = this.text.value.trim();
     if (!text || text.length > 200) { this.cancel.next(); this.state.set('invalid'); return; }
     this.searchText = text;
@@ -63,6 +81,12 @@ export class CatalogComponent {
   }
   openCode(): void { this.open(this.code.value.trim()); }
   open(code: string): void {
+    if (this.saving() || this.adding()) return;
+    this.saveMessage.set(null);
+    this.addOpen.set(false);
+    this.savedProductId.set(null);
+    this.addMessage.set(null);
+    this.addForm.reset();
     if (!/^\d{8,14}$/.test(code)) { this.cancel.next(); this.state.set('invalid'); return; }
     this.requests.next({ kind: 'detail', code });
   }
@@ -78,6 +102,70 @@ export class CatalogComponent {
     if (result?.paginasDisponibles != null) return page < result.paginasDisponibles;
     return (result?.productos?.length ?? 0) === 10;
   }
-  back(): void { this.state.set(this.results()?.productos?.length ? 'results' : 'idle'); }
+  saveProduct(): void {
+    const product = this.detail();
+    const code = product?.codigoBarras;
+    if (this.saving() || this.adding() || !code || !/^\d{8,14}$/.test(code)) return;
+    this.saving.set(true);
+    this.saveMessage.set(null);
+    this.saveService.save({ codigoBarras: code }, { skipHandleError: true })
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe({
+        next: result => {
+          this.saving.set(false);
+          if (result.resultado === ResultadoConsultaExterna.Encontrado && result.producto?.id) {
+            this.savedProductId.set(result.producto.id);
+            this.saveMessage.set('saved');
+            this.detail.update(current => current ? { ...current, advertencias: result.advertencias } : current);
+          } else if (result.resultado === ResultadoConsultaExterna.NoEncontrado) this.saveMessage.set('notFound');
+          else if (result.resultado === ResultadoConsultaExterna.LimiteDeSolicitudesExcedido) this.saveMessage.set('rate');
+          else this.saveMessage.set('error');
+        },
+        error: () => { this.saving.set(false); this.saveMessage.set('error'); },
+      });
+  }
+  showAdd(): void {
+    if (this.saving() || this.adding()) return;
+    this.addMessage.set(null);
+    this.addForm.reset();
+    this.addOpen.set(true);
+  }
+  cancelAdd(): void { if (!this.adding()) this.addOpen.set(false); }
+  addProduct(): void {
+    if (this.saving() || this.adding()) return;
+    if (this.addForm.invalid) { this.addForm.markAllAsTouched(); return; }
+    const code = this.detail()?.codigoBarras;
+    if (!code || !/^\d{8,14}$/.test(code)) { this.addMessage.set('saveError'); return; }
+    const values = this.addForm.getRawValue();
+    this.addMessage.set(null);
+    this.adding.set(true);
+    const create = (id: string) => {
+      this.pantry.create({ productId: id, quantity: values.quantity, unit: values.unit?.trim() || null, expirationDate: values.expirationDate || null }, { skipHandleError: true })
+        .pipe(takeUntilDestroyed(this.destroyRef))
+        .subscribe({
+          next: item => {
+            this.adding.set(false); this.addMessage.set('saved'); this.addOpen.set(false);
+            this.detail.update(current => current ? { ...current, advertencias: item.advertencias } : current);
+          },
+          error: () => { this.adding.set(false); this.addMessage.set('addError'); },
+        });
+    };
+    const id = this.savedProductId();
+    if (id) { create(id); return; }
+    this.saveService.save({ codigoBarras: code }, { skipHandleError: true })
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe({
+        next: result => {
+          if (result.resultado !== ResultadoConsultaExterna.Encontrado || !result.producto?.id) {
+            this.adding.set(false); this.addMessage.set('saveError'); return;
+          }
+          this.savedProductId.set(result.producto.id);
+          this.detail.update(current => current ? { ...current, advertencias: result.advertencias } : current);
+          create(result.producto.id);
+        },
+        error: () => { this.adding.set(false); this.addMessage.set('saveError'); },
+      });
+  }
+  back(): void { if (!this.saving() && !this.adding()) this.state.set(this.results()?.productos?.length ? 'results' : 'idle'); }
   retry(): void { if (this.lastRequest) this.requests.next(this.lastRequest); }
 }
