@@ -8,6 +8,19 @@ import { PantryEditModalComponent } from './pantry-edit-modal/pantry-edit-modal.
 
 type ListState = 'loading' | 'error' | 'success';
 
+const expirationLabels = {
+  expired: '::Pantry:ExpirationExpired',
+  dueToday: '::Pantry:ExpirationToday',
+  upcoming: '::Pantry:ExpirationUpcoming',
+} as const;
+
+export interface PantryListItem extends PantryItemDto {
+  expiration?: {
+    status: keyof typeof expirationLabels;
+    showWarning: boolean;
+  } | null;
+}
+
 @Component({
   selector: 'app-pantry',
   imports: [LocalizationPipe, ShortDatePipe, PantryEditModalComponent],
@@ -23,7 +36,7 @@ export class PantryComponent {
   private readonly destroyRef = inject(DestroyRef);
 
   readonly state = signal<ListState>('loading');
-  readonly items = signal<PantryItemDto[]>([]);
+  readonly items = signal<PantryListItem[]>([]);
   readonly totalCount = signal(0);
   readonly consumed = PantryItemStatus.Consumed;
 
@@ -51,6 +64,14 @@ export class PantryComponent {
       this.totalCount.set(total);
       this.state.set('success');
     });
+  }
+
+  expirationLabel(item: PantryListItem): string | undefined {
+    if (item.status !== PantryItemStatus.Active || !item.expirationDate || !item.expiration) {
+      return undefined;
+    }
+
+    return expirationLabels[item.expiration.status];
   }
 
   retry(): void {

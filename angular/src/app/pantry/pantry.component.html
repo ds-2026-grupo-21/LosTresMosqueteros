@@ -53,9 +53,20 @@
               <div>
                 <dt>{{ '::Pantry:ExpirationDate' | abpLocalization }}</dt>
                 <dd>
-                  {{ item.expirationDate
-                    ? (item.expirationDate | shortDate)
-                    : ('::Pantry:Unavailable' | abpLocalization) }}
+                  @if (item.expirationDate; as date) {
+                    <time [attr.datetime]="date">{{ date | shortDate }}</time>
+                  } @else {
+                    {{ '::Pantry:Unavailable' | abpLocalization }}
+                  }
+
+                  @if (expirationLabel(item); as label) {
+                    <span class="expiration-status">{{ label | abpLocalization }}</span>
+                    @if (item.expiration?.showWarning === true) {
+                      <span class="expiration-warning badge text-bg-warning">
+                        {{ '::Pantry:ExpirationWarning' | abpLocalization }}
+                      </span>
+                    }
+                  }
                 </dd>
               </div>
             </dl>
