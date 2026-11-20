@@ -61,7 +61,7 @@
 
                   @if (expirationLabel(item); as label) {
                     <span class="expiration-status">{{ label | abpLocalization }}</span>
-                    @if (item.expiration?.showWarning === true) {
+                    @if (showExpirationAlerts()) {
                       <span class="expiration-warning badge text-bg-warning">
                         {{ '::Pantry:ExpirationWarning' | abpLocalization }}
                       </span>

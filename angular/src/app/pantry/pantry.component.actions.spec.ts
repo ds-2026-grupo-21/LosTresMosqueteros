@@ -3,6 +3,7 @@ import { Confirmation, ConfirmationService } from '@abp/ng.theme.shared';
 import { CUSTOM_ELEMENTS_SCHEMA, Pipe, PipeTransform } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { PantryItemDto, PantryItemStatus, PantryService } from '@proxy/pantry';
+import { PreferenceService } from '@proxy/preferences';
 import { Subject, of } from 'rxjs';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { PantryComponent } from './pantry.component';
@@ -37,6 +38,7 @@ describe('PantryComponent acciones', () => {
       imports: [PantryComponent],
       providers: [
         { provide: PantryService, useValue: { getList, delete: del, markConsumed } },
+        { provide: PreferenceService, useValue: { get: () => of({ showAlerts: true }) } },
         { provide: ConfirmationService, useValue: { warn } },
         { provide: LIST_QUERY_DEBOUNCE_TIME, useValue: 0 },
       ],
@@ -65,6 +67,7 @@ describe('PantryComponent acciones', () => {
         imports: [PantryComponent],
         providers: [
           { provide: PantryService, useValue: { getList, delete: del } },
+          { provide: PreferenceService, useValue: { get: () => of({ showAlerts: true }) } },
           { provide: ConfirmationService, useValue: { warn } },
           { provide: LIST_QUERY_DEBOUNCE_TIME, useValue: 0 },
         ],

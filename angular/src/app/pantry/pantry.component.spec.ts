@@ -1,11 +1,11 @@
-import { LIST_QUERY_DEBOUNCE_TIME } from '@abp/ng.core';
+import { LIST_QUERY_DEBOUNCE_TIME, PagedResultDto } from '@abp/ng.core';
 import { Pipe, PipeTransform } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { PagedResultDto } from '@abp/ng.core';
-import { PantryItemStatus, PantryService } from '@proxy/pantry';
+import { ExpirationState, PantryItemDto, PantryItemStatus, PantryService } from '@proxy/pantry';
+import { PreferenceService, UserPreferenceDto } from '@proxy/preferences';
 import { Subject } from 'rxjs';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { PantryComponent, type PantryListItem } from './pantry.component';
+import { PantryComponent } from './pantry.component';
 
 @Pipe({ name: 'abpLocalization' })
 class TestLocalizationPipe implements PipeTransform {
@@ -17,20 +17,23 @@ class TestShortDatePipe implements PipeTransform {
   transform(value: string): string { return value; }
 }
 
-const datedItem: PantryListItem = { id: '1', status: PantryItemStatus.Active, expirationDate: '2026-11-21' };
+const datedItem: PantryItemDto = { id: '1', status: PantryItemStatus.Active, expirationDate: '2026-11-21' };
 
 describe('PantryComponent', () => {
   let fixture: ComponentFixture<PantryComponent>;
-  let response: Subject<PagedResultDto<PantryListItem>>;
+  let response: Subject<PagedResultDto<PantryItemDto>>;
   let getList: ReturnType<typeof vi.fn>;
+  let preferences: Subject<UserPreferenceDto>;
 
   beforeEach(() => {
-    response = new Subject<PagedResultDto<PantryListItem>>();
+    response = new Subject<PagedResultDto<PantryItemDto>>();
     getList = vi.fn(() => response.asObservable());
+    preferences = new Subject<UserPreferenceDto>();
     TestBed.configureTestingModule({
       imports: [PantryComponent],
       providers: [
         { provide: PantryService, useValue: { getList } },
+        { provide: PreferenceService, useValue: { get: () => preferences.asObservable() } },
         { provide: LIST_QUERY_DEBOUNCE_TIME, useValue: 0 },
       ],
     });
@@ -72,7 +75,7 @@ describe('PantryComponent', () => {
     fixture.detectChanges();
     expect(fixture.nativeElement.textContent).toContain('::Pantry:Error');
     expect(fixture.nativeElement.textContent).not.toContain('::Pantry:Empty');
-    response = new Subject<PagedResultDto<PantryListItem>>();
+    response = new Subject<PagedResultDto<PantryItemDto>>();
     fixture.nativeElement.querySelector('button').click();
     fixture.detectChanges();
     expect(getList).toHaveBeenCalledTimes(2);
@@ -83,10 +86,11 @@ describe('PantryComponent', () => {
   });
 
   it('distingue vencido, hoy y próximo a vencer a partir de la respuesta del servidor', () => {
-    const expired = { ...datedItem, id: 'expired', expirationDate: '2026-11-17', expiration: { status: 'expired', showWarning: true } } as const;
-    const today = { ...datedItem, id: 'today', expirationDate: '2026-11-18', expiration: { status: 'dueToday', showWarning: true } } as const;
-    const upcoming = { ...datedItem, id: 'upcoming', expirationDate: '2026-11-21', expiration: { status: 'upcoming', showWarning: true } } as const;
-    const later = { ...datedItem, id: 'later', expirationDate: '2026-11-22', expiration: null };
+    preferences.next({ showAlerts: true });
+    const expired = { ...datedItem, id: 'expired', expirationDate: '2026-11-17', expirationState: ExpirationState.Expired, daysRemaining: -1 };
+    const today = { ...datedItem, id: 'today', expirationDate: '2026-11-18', expirationState: ExpirationState.DueToday, daysRemaining: 0 };
+    const upcoming = { ...datedItem, id: 'upcoming', expirationDate: '2026-11-21', expirationState: ExpirationState.DueSoon, daysRemaining: 3 };
+    const later = { ...datedItem, id: 'later', expirationDate: '2026-11-22', expirationState: ExpirationState.None, daysRemaining: 4 };
     response.next({ items: [expired, today, upcoming, later], totalCount: 4 });
     fixture.detectChanges();
 
@@ -99,16 +103,30 @@ describe('PantryComponent', () => {
     expect(fixture.nativeElement.querySelectorAll('.expiration-warning')).toHaveLength(3);
   });
 
-  it('mantiene fecha y estado cuando la respuesta indica que no se muestra el aviso', () => {
-    response.next({ items: [{ ...datedItem, expiration: { status: 'upcoming', showWarning: false } }], totalCount: 1 });
+  it('mantiene fecha y estado mientras carga la preferencia y cuando está desactivada', () => {
+    response.next({ items: [{ ...datedItem, expirationState: ExpirationState.DueSoon }], totalCount: 1 });
+    fixture.detectChanges();
+    expect(fixture.nativeElement.querySelector('.expiration-warning')).toBeNull();
+
+    preferences.next({ showAlerts: false });
     fixture.detectChanges();
     expect(fixture.nativeElement.querySelector('time')?.textContent).toContain('2026-11-21');
     expect(fixture.nativeElement.textContent).toContain('::Pantry:ExpirationUpcoming');
     expect(fixture.nativeElement.querySelector('.expiration-warning')).toBeNull();
   });
 
+  it('conserva el estado de vencimiento si falla la consulta de preferencias', () => {
+    preferences.error(new Error('Sin conexión'));
+    response.next({ items: [{ ...datedItem, expirationState: ExpirationState.DueToday }], totalCount: 1 });
+    fixture.detectChanges();
+
+    expect(fixture.nativeElement.textContent).toContain('::Pantry:ExpirationToday');
+    expect(fixture.nativeElement.querySelector('.expiration-warning')).toBeNull();
+  });
+
   it('omite el aviso para un ítem consumido o sin fecha aunque la respuesta aún lo incluya', () => {
-    const stale = { ...datedItem, expiration: { status: 'expired', showWarning: true } } as const;
+    preferences.next({ showAlerts: true });
+    const stale = { ...datedItem, expirationState: ExpirationState.Expired };
     response.next({
       totalCount: 2,
       items: [
@@ -123,17 +141,18 @@ describe('PantryComponent', () => {
   });
 
   it('tras guardar una nueva fecha deja de mostrar el aviso anterior', () => {
-    response.next({ items: [{ ...datedItem, expiration: { status: 'upcoming', showWarning: true } }], totalCount: 1 });
+    preferences.next({ showAlerts: true });
+    response.next({ items: [{ ...datedItem, expirationState: ExpirationState.DueSoon }], totalCount: 1 });
     fixture.detectChanges();
     expect(fixture.nativeElement.querySelector('.expiration-warning')).not.toBeNull();
 
-    response = new Subject<PagedResultDto<PantryListItem>>();
+    response = new Subject<PagedResultDto<PantryItemDto>>();
     fixture.componentInstance.onEditSaved();
     fixture.detectChanges();
     expect(fixture.nativeElement.querySelector('.expiration-warning')).toBeNull();
     expect(fixture.nativeElement.textContent).toContain('::Pantry:Loading');
 
-    response.next({ items: [{ ...datedItem, expirationDate: '2026-11-22', expiration: null }], totalCount: 1 });
+    response.next({ items: [{ ...datedItem, expirationDate: '2026-11-22', expirationState: ExpirationState.None }], totalCount: 1 });
     fixture.detectChanges();
     expect(fixture.nativeElement.querySelector('time')?.getAttribute('datetime')).toBe('2026-11-22');
     expect(fixture.nativeElement.querySelector('.expiration-warning')).toBeNull();
@@ -143,7 +162,7 @@ describe('PantryComponent', () => {
   it('solicita la página siguiente cuando hay más resultados', () => {
     response.next({ items: [{ id: '1', productName: 'Arroz' }], totalCount: 11 });
     fixture.detectChanges();
-    response = new Subject<PagedResultDto<PantryListItem>>();
+    response = new Subject<PagedResultDto<PantryItemDto>>();
     const buttons = fixture.nativeElement.querySelectorAll('.pagination-controls button');
     expect(buttons[0].disabled).toBe(true);
     buttons[1].click();

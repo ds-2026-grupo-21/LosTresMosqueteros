@@ -3,23 +3,17 @@ import { Confirmation, ConfirmationService } from '@abp/ng.theme.shared';
 import { ChangeDetectionStrategy, Component, DestroyRef, inject, signal } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { EMPTY, Observable, catchError, finalize } from 'rxjs';
-import { PantryItemDto, PantryItemStatus, PantryService } from '@proxy/pantry';
+import { ExpirationState, PantryItemDto, PantryItemStatus, PantryService } from '@proxy/pantry';
+import { PreferenceService } from '@proxy/preferences';
 import { PantryEditModalComponent } from './pantry-edit-modal/pantry-edit-modal.component';
 
 type ListState = 'loading' | 'error' | 'success';
 
-const expirationLabels = {
-  expired: '::Pantry:ExpirationExpired',
-  dueToday: '::Pantry:ExpirationToday',
-  upcoming: '::Pantry:ExpirationUpcoming',
-} as const;
-
-export interface PantryListItem extends PantryItemDto {
-  expiration?: {
-    status: keyof typeof expirationLabels;
-    showWarning: boolean;
-  } | null;
-}
+const expirationLabels: Partial<Record<ExpirationState, string>> = {
+  [ExpirationState.Expired]: '::Pantry:ExpirationExpired',
+  [ExpirationState.DueToday]: '::Pantry:ExpirationToday',
+  [ExpirationState.DueSoon]: '::Pantry:ExpirationUpcoming',
+};
 
 @Component({
   selector: 'app-pantry',
@@ -32,11 +26,13 @@ export interface PantryListItem extends PantryItemDto {
 export class PantryComponent {
   readonly list = inject(ListService);
   private readonly pantry = inject(PantryService);
+  private readonly preferences = inject(PreferenceService);
   private readonly confirmation = inject(ConfirmationService);
   private readonly destroyRef = inject(DestroyRef);
 
   readonly state = signal<ListState>('loading');
-  readonly items = signal<PantryListItem[]>([]);
+  readonly items = signal<PantryItemDto[]>([]);
+  readonly showExpirationAlerts = signal(false);
   readonly totalCount = signal(0);
   readonly consumed = PantryItemStatus.Consumed;
 
@@ -45,6 +41,11 @@ export class PantryComponent {
   readonly actionError = signal<string | null>(null);
 
   constructor() {
+    this.preferences.get({ skipHandleError: true }).pipe(
+      catchError(() => EMPTY),
+      takeUntilDestroyed(this.destroyRef),
+    ).subscribe(preference => this.showExpirationAlerts.set(preference.showAlerts ?? true));
+
     this.list.hookToQuery(query => {
       this.state.set('loading');
       return this.pantry.getList(query, { skipHandleError: true }).pipe(
@@ -66,12 +67,12 @@ export class PantryComponent {
     });
   }
 
-  expirationLabel(item: PantryListItem): string | undefined {
-    if (item.status !== PantryItemStatus.Active || !item.expirationDate || !item.expiration) {
+  expirationLabel(item: PantryItemDto): string | undefined {
+    if (item.status !== PantryItemStatus.Active || !item.expirationDate) {
       return undefined;
     }
 
-    return expirationLabels[item.expiration.status];
+    return expirationLabels[item.expirationState ?? ExpirationState.None];
   }
 
   retry(): void {
