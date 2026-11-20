@@ -2,11 +2,13 @@ using System;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 using System.Security.Claims;
+using System.Text.Json;
 using System.Threading.Tasks;
 using LosTresMosqueteros.Pantry;
 using LosTresMosqueteros.Productos;
 using Shouldly;
 using Volo.Abp.Application.Dtos;
+using Volo.Abp.Auditing;
 using Volo.Abp.Domain.Entities;
 using Volo.Abp.Domain.Repositories;
 using Volo.Abp.Security.Claims;
@@ -69,6 +71,95 @@ public class PantryAppServiceTests : LosTresMosqueterosApplicationTestBase<LosTr
             await Should.ThrowAsync<EntityNotFoundException>(() => _service.MarkConsumedAsync(id));
             await Should.ThrowAsync<EntityNotFoundException>(() => _service.DeleteAsync(id));
         }
+    }
+
+    [Fact]
+    public async Task Private_notes_are_isolated_for_two_owners_of_the_same_product()
+    {
+        var productId = Guid.NewGuid();
+        await WithUnitOfWorkAsync(() => _products.InsertAsync(new Producto(productId, "11223344", "Arroz")));
+        var ownerA = Guid.NewGuid();
+        var ownerB = Guid.NewGuid();
+        Guid itemA;
+        Guid itemB;
+
+        using (AsUser(ownerA))
+        {
+            itemA = (await _service.CreateAsync(new CreatePantryItemDto { ProductId = productId })).Id;
+            (await _service.GetAsync(itemA)).PrivateNote.ShouldBeNull();
+            await _service.UpdateAsync(itemA, new UpdatePantryItemDto { PrivateNote = "Nota de A\nDos líneas" });
+        }
+
+        using (AsUser(ownerB))
+        {
+            itemB = (await _service.CreateAsync(new CreatePantryItemDto
+            {
+                ProductId = productId,
+                PrivateNote = "Nota de B"
+            })).Id;
+            var list = await _service.GetListAsync(new PagedResultRequestDto());
+            list.TotalCount.ShouldBe(1);
+            list.Items[0].Id.ShouldBe(itemB);
+            list.Items[0].PrivateNote.ShouldBe("Nota de B");
+            await Should.ThrowAsync<EntityNotFoundException>(() => _service.GetAsync(itemA));
+        }
+
+        using (AsUser(ownerA))
+        {
+            var list = await _service.GetListAsync(new PagedResultRequestDto());
+            list.TotalCount.ShouldBe(1);
+            list.Items[0].Id.ShouldBe(itemA);
+            list.Items[0].PrivateNote.ShouldBe("Nota de A\nDos líneas");
+            await Should.ThrowAsync<EntityNotFoundException>(() => _service.GetAsync(itemB));
+            await Should.ThrowAsync<EntityNotFoundException>(() =>
+                _service.UpdateAsync(itemB, new UpdatePantryItemDto { PrivateNote = "Cambio ajeno" }));
+        }
+
+        using (AsUser(ownerB))
+        {
+            (await _service.GetAsync(itemB)).PrivateNote.ShouldBe("Nota de B");
+        }
+    }
+
+    [Fact]
+    public async Task Private_note_can_be_edited_preserved_and_cleared_via_json_contract()
+    {
+        var productId = Guid.NewGuid();
+        await WithUnitOfWorkAsync(() => _products.InsertAsync(new Producto(productId, "22334455", "Fideos")));
+        using var user = AsUser(Guid.NewGuid());
+        var item = await _service.CreateAsync(new CreatePantryItemDto { ProductId = productId });
+        var json = new JsonSerializerOptions(JsonSerializerDefaults.Web);
+
+        var multiline = "Primera línea\nSegunda línea";
+        (await _service.UpdateAsync(item.Id, new UpdatePantryItemDto { PrivateNote = multiline }))
+            .PrivateNote.ShouldBe(multiline);
+        var quantityEdit = JsonSerializer.Deserialize<UpdatePantryItemDto>("""{"quantity":3}""", json)!;
+        var quantityResult = await _service.UpdateAsync(item.Id, quantityEdit);
+        quantityResult.Quantity.ShouldBe(3);
+        quantityResult.PrivateNote.ShouldBe(multiline);
+
+        var maxNote = new string('x', PantryItemConsts.MaxPrivateNoteLength);
+        await _service.UpdateAsync(item.Id, new UpdatePantryItemDto { PrivateNote = maxNote });
+        await Should.ThrowAsync<AbpValidationException>(() =>
+            _service.UpdateAsync(item.Id, new UpdatePantryItemDto { PrivateNote = maxNote + "x" }));
+        (await _service.GetAsync(item.Id)).PrivateNote.ShouldBe(maxNote);
+
+        var clearNote = JsonSerializer.Deserialize<UpdatePantryItemDto>("""{"privateNote":null}""", json)!;
+        await _service.UpdateAsync(item.Id, clearNote);
+        (await _service.GetAsync(item.Id)).PrivateNote.ShouldBeNull();
+
+        await _service.UpdateAsync(item.Id, new UpdatePantryItemDto { PrivateNote = "Otra nota" });
+        await _service.UpdateAsync(item.Id, new UpdatePantryItemDto { PrivateNote = " \n\t " });
+        (await _service.GetAsync(item.Id)).PrivateNote.ShouldBeNull();
+    }
+
+    [Fact]
+    public void Audit_serialization_omits_note_text_in_create_and_update_requests()
+    {
+        var serializer = GetRequiredService<IAuditSerializer>();
+        const string note = "texto privado";
+        serializer.Serialize(new UpdatePantryItemDto { PrivateNote = note }).ShouldNotContain(note);
+        serializer.Serialize(new CreatePantryItemDto { PrivateNote = note }).ShouldNotContain(note);
     }
 
     [Theory]

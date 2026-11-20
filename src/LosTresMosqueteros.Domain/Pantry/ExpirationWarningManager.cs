@@ -13,7 +13,8 @@ namespace LosTresMosqueteros.Pantry;
 public class ExpirationWarningManager : DomainService
 {
     // Se incluyen el día límite, hoy y los vencidos. La fecha recibida es UTC.
-    public const int WarningThresholdDays = 3;
+    // El valor sale de la regla común, que también usa la API de despensa.
+    public const int WarningThresholdDays = ExpirationRule.ThresholdDays;
 
     private readonly IRepository<PantryItem, Guid> _items;
     private readonly IRepository<ExpirationWarning, Guid> _warnings;
@@ -69,9 +70,8 @@ public class ExpirationWarningManager : DomainService
         var warning = await _warnings.FindAsync(
             x => x.PantryItemId == item.Id && x.Type == WarningType.Expiration,
             includeDetails: false, cancellationToken: cancellationToken);
-        var daysRemaining = item.ExpirationDate?.DayNumber - todayUtc.DayNumber;
-        var shouldWarn = item.Status == PantryItemStatus.Active
-            && daysRemaining.HasValue && daysRemaining.Value <= WarningThresholdDays;
+        var daysRemaining = ExpirationRule.DaysRemaining(item.ExpirationDate, todayUtc);
+        var shouldWarn = ExpirationRule.ShouldWarn(item.Status, item.ExpirationDate, todayUtc);
 
         if (warning is null)
         {

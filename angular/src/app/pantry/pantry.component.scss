@@ -3,9 +3,14 @@
 .pantry-list { display: grid; gap: 1rem; padding: 0; list-style: none; }
 .pantry-item { min-width: 0; }
 .product-name { font-size: 1.15rem; overflow-wrap: anywhere; }
-.item-details { display: grid; grid-template-columns: repeat(auto-fit, minmax(9rem, 1fr)); gap: .75rem; margin: 1rem 0 0; }
+.item-details { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 9rem), 1fr)); gap: .75rem; margin: 1rem 0 0; }
 .item-details dt { color: var(--bs-secondary-color); font-weight: 500; }
 .item-details dd { margin: .25rem 0 0; overflow-wrap: anywhere; }
+.expiration-status { display: block; margin-top: .25rem; font-weight: 600; }
+.pantry-item .expiration-warning { margin: .25rem 0 0; white-space: normal; }
+.pantry-note { margin: 1rem 0 0; }
+.pantry-note dt { color: var(--bs-secondary-color); font-weight: 500; }
+.pantry-note dd { margin: .25rem 0 0; white-space: pre-wrap; overflow-wrap: anywhere; }
 .pagination-controls { display: flex; gap: .5rem; margin-top: 1rem; }
 .pantry .alert { margin-bottom: 1rem; }
 .pantry-item .badge { display: inline-block; margin-bottom: .5rem; }

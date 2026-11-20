@@ -9,6 +9,7 @@ import { PantryItemDto, PantryService, UpdatePantryItemDto } from '@proxy/pantry
 // El límite de la interfaz evita perder precisión al serializar números de JavaScript.
 export const UNIT_MAX_LENGTH = 50;
 export const QUANTITY_MAX = 999999999999.99;
+export const PRIVATE_NOTE_MAX_LENGTH = 500;
 
 export function validDate(control: AbstractControl): ValidationErrors | null {
   const value = control.value as string | null;
@@ -80,6 +81,17 @@ export function maxTwoDecimals(control: AbstractControl): ValidationErrors | nul
               <div class="text-danger small">{{ '::Pantry:DateInvalid' | abpLocalization }}</div>
             }
           </div>
+          <div class="mb-3">
+            <label class="form-label" for="privateNote">{{ '::Pantry:PrivateNote' | abpLocalization }}</label>
+            <textarea id="privateNote" class="form-control" rows="3" formControlName="privateNote"
+              [attr.aria-invalid]="form.controls.privateNote.touched && form.controls.privateNote.invalid"
+              aria-describedby="privateNoteLength"></textarea>
+            <div id="privateNoteLength"
+              [class.text-danger]="form.controls.privateNote.touched && form.controls.privateNote.invalid"
+              class="form-text">
+              {{ '::Pantry:PrivateNoteMaxLength' | abpLocalization: privateNoteMaxLength }}
+            </div>
+          </div>
         </form>
       </ng-template>
 
@@ -104,6 +116,7 @@ export class PantryEditModalComponent implements OnInit {
 
   readonly saving = signal(false);
   readonly serverError = signal<string | null>(null);
+  readonly privateNoteMaxLength = String(PRIVATE_NOTE_MAX_LENGTH);
 
   readonly form = this.fb.group({
     quantity: this.fb.control<number | null>(null, [
@@ -113,6 +126,7 @@ export class PantryEditModalComponent implements OnInit {
     ]),
     unit: this.fb.control<string | null>(null, [Validators.maxLength(UNIT_MAX_LENGTH)]),
     expirationDate: this.fb.control<string | null>(null, [validDate]),
+    privateNote: this.fb.nonNullable.control('', [Validators.maxLength(PRIVATE_NOTE_MAX_LENGTH)]),
   });
 
   ngOnInit(): void {
@@ -121,6 +135,7 @@ export class PantryEditModalComponent implements OnInit {
       quantity: item.quantity ?? null,
       unit: item.unit ?? null,
       expirationDate: item.expirationDate ?? null,
+      privateNote: item.privateNote ?? '',
     });
   }
 
@@ -141,6 +156,9 @@ export class PantryEditModalComponent implements OnInit {
       unit: value.unit?.trim() || null,
       expirationDate: value.expirationDate || null,
     };
+    if (value.privateNote !== (this.item().privateNote ?? '')) {
+      body.privateNote = value.privateNote === '' ? null : value.privateNote;
+    }
 
     this.saving.set(true);
     this.serverError.set(null);

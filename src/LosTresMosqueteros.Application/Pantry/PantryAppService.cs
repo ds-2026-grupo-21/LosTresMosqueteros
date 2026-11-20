@@ -88,6 +88,7 @@ public class PantryAppService : LosTresMosqueterosAppService, IPantryAppService
             input.Unit,
             input.ExpirationDate);
 
+        item.UpdatePrivateNote(input.PrivateNote);
         await _pantryItemRepository.InsertAsync(item);
 
         var dto = await MapToDtoAsync(item);
@@ -101,6 +102,10 @@ public class PantryAppService : LosTresMosqueterosAppService, IPantryAppService
         var item = await GetOwnedItemAsync(id);
 
         item.UpdateDetails(input.Quantity, input.Unit, input.ExpirationDate);
+        if (input.TryGetPrivateNote(out var note))
+        {
+            item.UpdatePrivateNote(note);
+        }
         await _pantryItemRepository.UpdateAsync(item);
 
         return await MapToDtoAsync(item);
@@ -144,6 +149,10 @@ public class PantryAppService : LosTresMosqueterosAppService, IPantryAppService
     {
         var product = await _productRepository.FindAsync(item.ProductId);
 
+        // Misma regla y mismo día UTC que el worker: el estado refleja los datos actuales del ítem,
+        // así una fecha recién editada no queda contradicha por un aviso todavía no reprocesado.
+        var todayUtc = DateOnly.FromDateTime(Clock.Now.ToUniversalTime());
+
         return new PantryItemDto
         {
             Id = item.Id,
@@ -152,7 +161,10 @@ public class PantryAppService : LosTresMosqueterosAppService, IPantryAppService
             Status = item.Status,
             Quantity = item.Quantity,
             Unit = item.Unit,
-            ExpirationDate = item.ExpirationDate
+            ExpirationDate = item.ExpirationDate,
+            PrivateNote = item.PrivateNote,
+            ExpirationState = ExpirationRule.GetState(item.Status, item.ExpirationDate, todayUtc),
+            DaysRemaining = ExpirationRule.DaysRemaining(item.ExpirationDate, todayUtc)
         };
     }
 }

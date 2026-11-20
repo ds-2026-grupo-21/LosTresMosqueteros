@@ -5,7 +5,7 @@ import { ReactiveFormsModule } from '@angular/forms';
 import { PantryItemDto, PantryService } from '@proxy/pantry';
 import { of, Subject } from 'rxjs';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { PantryEditModalComponent, QUANTITY_MAX, UNIT_MAX_LENGTH } from './pantry-edit-modal.component';
+import { PantryEditModalComponent, PRIVATE_NOTE_MAX_LENGTH, QUANTITY_MAX, UNIT_MAX_LENGTH } from './pantry-edit-modal.component';
 
 @Pipe({ name: 'abpLocalization' })
 class TestLocalizationPipe implements PipeTransform {
@@ -19,6 +19,7 @@ describe('PantryEditModalComponent', () => {
 
   const item: PantryItemDto = {
     id: 'a1', productName: 'Arroz', quantity: 2, unit: 'kg', expirationDate: '2026-12-01',
+    privateNote: 'Primera línea\nSegunda línea',
   };
 
   beforeEach(() => {
@@ -39,7 +40,9 @@ describe('PantryEditModalComponent', () => {
   afterEach(() => TestBed.resetTestingModule());
 
   it('precarga cantidad, unidad y fecha del ítem', () => {
-    expect(component.form.getRawValue()).toEqual({ quantity: 2, unit: 'kg', expirationDate: '2026-12-01' });
+    expect(component.form.getRawValue()).toEqual({
+      quantity: 2, unit: 'kg', expirationDate: '2026-12-01', privateNote: item.privateNote,
+    });
   });
 
   it('rechaza una cantidad negativa sin llamar al servidor', () => {
@@ -118,10 +121,48 @@ describe('PantryEditModalComponent', () => {
     expect(saved).toHaveBeenCalled();
   });
 
+  it('omite la nota cuando solo cambia la cantidad', () => {
+    component.form.patchValue({ quantity: 3 });
+    component.save();
+    expect(update.mock.calls[0][1]).not.toHaveProperty('privateNote');
+  });
+
+  it('envía la nota de varias líneas y usa null al quitarla', () => {
+    const note = 'Otra nota\nSegunda línea';
+    component.form.controls.privateNote.setValue(note);
+    component.save();
+    expect(update.mock.calls[0][1]).toHaveProperty('privateNote', note);
+
+    component.form.controls.privateNote.setValue('');
+    component.save();
+    expect(update.mock.calls[1][1]).toHaveProperty('privateNote', null);
+  });
+
+  it('acepta el máximo y rechaza un carácter más', () => {
+    const maxNote = 'x'.repeat(PRIVATE_NOTE_MAX_LENGTH);
+    component.form.controls.privateNote.setValue(maxNote);
+    component.save();
+    expect(update.mock.calls[0][1]).toHaveProperty('privateNote', maxNote);
+
+    component.form.controls.privateNote.setValue(maxNote + 'x');
+    component.save();
+    expect(component.form.controls.privateNote.hasError('maxlength')).toBe(true);
+    expect(update).toHaveBeenCalledTimes(1);
+  });
+
+  it('cierra al cancelar sin guardar la nota editada', () => {
+    const closed = vi.fn();
+    component.closed.subscribe(closed);
+    component.form.controls.privateNote.setValue('Borrador');
+    component.onVisibleChange(false);
+    expect(closed).toHaveBeenCalledOnce();
+    expect(update).not.toHaveBeenCalled();
+  });
+
   it('mantiene los datos y permite reintentar si el servidor rechaza la edición', () => {
     const pending = new Subject<PantryItemDto>();
     update.mockReturnValueOnce(pending.asObservable());
-    component.form.patchValue({ quantity: 7, unit: 'kg' });
+    component.form.patchValue({ quantity: 7, unit: 'kg', privateNote: 'Borrador' });
     component.save();
     expect(component.saving()).toBe(true);
     pending.error(new HttpErrorResponse({ status: 400 }));
@@ -129,5 +170,8 @@ describe('PantryEditModalComponent', () => {
     expect(component.serverError()).toBe('::Pantry:ServerValidationError');
     expect(component.form.getRawValue().quantity).toBe(7);
     expect(component.form.getRawValue().unit).toBe('kg');
+    expect(component.form.getRawValue().privateNote).toBe('Borrador');
+    component.save();
+    expect(update.mock.calls[1][1]).toHaveProperty('privateNote', 'Borrador');
   });
 });
