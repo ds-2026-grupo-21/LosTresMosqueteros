@@ -4,8 +4,12 @@ public static class LosTresMosqueterosPermissions
 {
     public const string GroupName = "LosTresMosqueteros";
 
+    public static class Administration
+    {
+        private const string Prefix = GroupName + ".Administration";
 
-    
-    //Add your own permission names. Example:
-    //public const string MyPermission1 = GroupName + ".MyPermission1";
+        public const string Products = Prefix + ".Products";
+        public const string Audit = Prefix + ".Audit";
+        public const string IntegrationMetrics = Prefix + ".IntegrationMetrics";
+    }
 }

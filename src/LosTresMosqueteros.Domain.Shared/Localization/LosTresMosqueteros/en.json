@@ -2,6 +2,10 @@
   "Culture": "en",
   "Texts": {
     "AppName": "LosTresMosqueteros",
+    "Permission:Administration": "Pantry administration",
+    "Permission:InternalProducts": "Internal products",
+    "Permission:Audit": "Audit log access",
+    "Permission:IntegrationMetrics": "Integration metrics",
     "Catalog:StoredWarnings": "Saved product warnings",
     "Catalog:StoredWarningsExplanation": "This comparison uses saved data, which may differ from the external details above.",
     "Catalog:SaveProduct": "Save product",

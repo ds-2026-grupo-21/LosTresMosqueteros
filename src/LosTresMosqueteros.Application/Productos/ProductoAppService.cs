@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Threading.Tasks;
+using LosTresMosqueteros.Permissions;
 using Microsoft.AspNetCore.Authorization;
 using Volo.Abp;
 using Volo.Abp.Application.Dtos;
@@ -8,7 +9,7 @@ using Volo.Abp.Domain.Repositories;
 
 namespace LosTresMosqueteros.Productos;
 
-[Authorize]
+[Authorize(LosTresMosqueterosPermissions.Administration.Products)]
 public class ProductoAppService : CrudAppService<Producto, ProductoDto, ProductoDto, Guid, PagedAndSortedResultRequestDto, CreateProductoDto, CreateProductoDto>, IProductoAppService
 {
     private readonly IProductoRepository _productos;
