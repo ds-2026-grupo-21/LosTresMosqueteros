@@ -17,6 +17,7 @@ public class PantryItemDto : EntityDto<Guid>
     public string? Unit { get; set; }
 
     public DateOnly? ExpirationDate { get; set; }
+    public string? PrivateNote { get; set; }
 
     /// <summary>
     /// Estado de vencimiento calculado por el servidor con el día UTC y la regla común

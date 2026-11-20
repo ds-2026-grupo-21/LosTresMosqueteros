@@ -71,6 +71,13 @@
               </div>
             </dl>
 
+            @if (item.privateNote; as note) {
+              <dl class="pantry-note">
+                <dt>{{ '::Pantry:PrivateNote' | abpLocalization }}</dt>
+                <dd>{{ note }}</dd>
+              </dl>
+            }
+
             <div class="pantry-actions">
               <button
                 type="button"

@@ -88,6 +88,7 @@ public class PantryAppService : LosTresMosqueterosAppService, IPantryAppService
             input.Unit,
             input.ExpirationDate);
 
+        item.UpdatePrivateNote(input.PrivateNote);
         await _pantryItemRepository.InsertAsync(item);
 
         var dto = await MapToDtoAsync(item);
@@ -101,6 +102,10 @@ public class PantryAppService : LosTresMosqueterosAppService, IPantryAppService
         var item = await GetOwnedItemAsync(id);
 
         item.UpdateDetails(input.Quantity, input.Unit, input.ExpirationDate);
+        if (input.TryGetPrivateNote(out var note))
+        {
+            item.UpdatePrivateNote(note);
+        }
         await _pantryItemRepository.UpdateAsync(item);
 
         return await MapToDtoAsync(item);
@@ -157,6 +162,7 @@ public class PantryAppService : LosTresMosqueterosAppService, IPantryAppService
             Quantity = item.Quantity,
             Unit = item.Unit,
             ExpirationDate = item.ExpirationDate,
+            PrivateNote = item.PrivateNote,
             ExpirationState = ExpirationRule.GetState(item.Status, item.ExpirationDate, todayUtc),
             DaysRemaining = ExpirationRule.DaysRemaining(item.ExpirationDate, todayUtc)
         };

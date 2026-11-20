@@ -1,4 +1,5 @@
 ﻿using System;
+using Volo.Abp.Auditing;
 using Volo.Abp.Domain.Entities.Auditing;
 
 namespace LosTresMosqueteros.Pantry;
@@ -11,6 +12,10 @@ public class PantryItem : AuditedAggregateRoot<Guid>
     public DateOnly? ExpirationDate { get; private set; }
     public decimal? Quantity { get; private set; }
     public string? Unit { get; private set; }
+
+    [DisableAuditing]
+    public string? PrivateNote { get; private set; }
+
     protected PantryItem()
     {
         /* Requerido por Entity Framework Core */
@@ -48,5 +53,18 @@ public class PantryItem : AuditedAggregateRoot<Guid>
         Unit = normalizedUnit;
         ExpirationDate = expirationDate;
     }
+
+    public void UpdatePrivateNote(string? note)
+    {
+        if (note?.Length > PantryItemConsts.MaxPrivateNoteLength)
+        {
+            throw new ArgumentException(
+                $"La nota privada admite hasta {PantryItemConsts.MaxPrivateNoteLength} caracteres.",
+                nameof(note));
+        }
+
+        PrivateNote = string.IsNullOrWhiteSpace(note) ? null : note;
+    }
+
     public void MarkConsumed() => Status = PantryItemStatus.Consumed;
 }

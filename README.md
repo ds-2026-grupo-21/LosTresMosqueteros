@@ -87,6 +87,7 @@ En el detalle se informa la fuente externa y que la evaluación no constituye co
 ## Contratos y reglas principales
 
 - **Despensa:** `GET/POST /api/app/pantry`, `GET/PUT/DELETE /api/app/pantry/{id}` y `POST /api/app/pantry/{id}/mark-consumed`. Cantidad, unidad y vencimiento son opcionales. La cantidad es no negativa y tiene hasta dos decimales; la interfaz limita su valor a 999.999.999.999,99 para conservar precisión. La unidad admite hasta 50 caracteres.
+- **Nota privada:** cada ítem admite una nota opcional de hasta 500 caracteres (unidades UTF-16), con saltos de línea. En `PUT /api/app/pantry/{id}`, omitir `privateNote` conserva la nota. Enviar `null`, una cadena vacía o solo espacios la elimina. El límite se valida también en el formulario de edición.
 - **Historial:** los ítems consumidos permanecen visibles hasta su eliminación explícita. Al eliminar un ítem se eliminan sus advertencias asociadas.
 - **Fechas:** el vencimiento es una fecha sin hora. El worker usa el día UTC, que puede diferir del día local cerca de medianoche.
 - **Catálogo y guardado:** se conservan los datos ausentes. Guardar un código existente devuelve el mismo identificador. Consultar el catálogo no guarda productos y guardar un producto no crea un ítem de despensa.
@@ -119,6 +120,12 @@ yarn build
 La suite utiliza proveedores externos simulados y bases aisladas. Las pruebas con SQLite no reemplazan la verificación de las migraciones en SQL Server. El guardado concurrente tiene una prueba que fuerza dos lecturas iniciales sin producto y verifica la recuperación del conflicto del índice único.
 
 [Estado del CI](https://github.com/ds-2026-grupo-21/LosTresMosqueteros/actions). La medición unitaria se configura en `CodeCoverage.runsettings`; el mínimo del 70 % corresponde al cierre del trabajo final.
+
+### Verificación de notas privadas
+
+- DbMigrator aplicó la migración en SQL Server Express y conservó un ítem previo con nota nula.
+- Dos cuentas con el mismo producto sólo recuperaron sus propias notas. El acceso directo a un ítem ajeno devolvió 404 y las solicitudes sin sesión devolvieron 401.
+- En Angular se comprobó el guardado, la recuperación al recargar, la cancelación y el borrado. Las pruebas cubren el límite de 500 caracteres y el reintento tras un error.
 
 ## Documentación y continuidad
 

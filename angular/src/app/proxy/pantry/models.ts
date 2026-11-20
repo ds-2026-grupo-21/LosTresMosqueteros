@@ -14,6 +14,7 @@ export interface PantryItemDto extends EntityDto<string> {
   quantity?: number | null;
   unit?: string | null;
   expirationDate?: string | null;
+  privateNote?: string | null;
   expirationState?: ExpirationState;
   daysRemaining?: number | null;
   advertencias?: FoodWarningDto | null;
@@ -23,4 +24,5 @@ export interface UpdatePantryItemDto {
   quantity?: number | null;
   unit?: string | null;
   expirationDate?: string | null;
+  privateNote?: string | null;
 }
