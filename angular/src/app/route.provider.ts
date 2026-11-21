@@ -1,4 +1,5 @@
 import { RoutesService, eLayoutType } from '@abp/ng.core';
+import { eThemeSharedRouteNames } from '@abp/ng.theme.shared';
 import { inject, provideAppInitializer } from '@angular/core';
 export const APP_ROUTE_PROVIDER = [
   provideAppInitializer(() => {
@@ -8,6 +9,15 @@ export const APP_ROUTE_PROVIDER = [
 function configureRoutes() {
   const routes = inject(RoutesService);
   routes.add([
+      {
+        path: '/integration-metrics',
+        name: '::Menu:IntegrationMetrics',
+        parentName: eThemeSharedRouteNames.Administration,
+        iconClass: 'fas fa-chart-line',
+        order: 10,
+        layout: eLayoutType.application,
+        requiredPolicy: 'LosTresMosqueteros.Administration.IntegrationMetrics',
+      },
       {
         path: '/catalog',
         name: '::Catalog:Title',

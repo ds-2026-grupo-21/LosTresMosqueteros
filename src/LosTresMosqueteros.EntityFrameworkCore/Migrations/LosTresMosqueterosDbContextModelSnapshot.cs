@@ -24,6 +24,30 @@ namespace LosTresMosqueteros.Migrations
 
             SqlServerModelBuilderExtensions.UseIdentityColumns(modelBuilder);
 
+            modelBuilder.Entity("LosTresMosqueteros.Integrations.ExternalApiCall", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<int>("DurationMs")
+                        .HasColumnType("int");
+
+                    b.Property<DateTime>("OccurredAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<int>("Operation")
+                        .HasColumnType("int");
+
+                    b.Property<int>("Outcome")
+                        .HasColumnType("int");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("OccurredAt", "Operation");
+
+                    b.ToTable("AppExternalApiCalls", (string)null);
+                });
+
             modelBuilder.Entity("LosTresMosqueteros.Pantry.ExpirationWarning", b =>
                 {
                     b.Property<Guid>("Id")

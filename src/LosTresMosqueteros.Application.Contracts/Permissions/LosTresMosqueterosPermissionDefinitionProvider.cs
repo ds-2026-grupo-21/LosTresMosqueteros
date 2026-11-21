@@ -1,7 +1,6 @@
 using LosTresMosqueteros.Localization;
 using Volo.Abp.Authorization.Permissions;
 using Volo.Abp.Localization;
-using Volo.Abp.MultiTenancy;
 
 namespace LosTresMosqueteros.Permissions;
 
@@ -9,10 +8,15 @@ public class LosTresMosqueterosPermissionDefinitionProvider : PermissionDefiniti
 {
     public override void Define(IPermissionDefinitionContext context)
     {
-        var myGroup = context.AddGroup(LosTresMosqueterosPermissions.GroupName);
+        var administration = context.AddGroup(
+            LosTresMosqueterosPermissions.GroupName, L("Permission:Administration"));
 
-        //Define your own permissions here. Example:
-        //myGroup.AddPermission(LosTresMosqueterosPermissions.MyPermission1, L("Permission:MyPermission1"));
+        administration.AddPermission(
+            LosTresMosqueterosPermissions.Administration.Products, L("Permission:InternalProducts"));
+        administration.AddPermission(
+            LosTresMosqueterosPermissions.Administration.Audit, L("Permission:Audit"));
+        administration.AddPermission(
+            LosTresMosqueterosPermissions.Administration.IntegrationMetrics, L("Permission:IntegrationMetrics"));
     }
 
     private static LocalizableString L(string name)

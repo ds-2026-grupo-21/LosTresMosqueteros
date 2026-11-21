@@ -2,6 +2,13 @@ import { authGuard, permissionGuard } from '@abp/ng.core';
 import { Routes } from '@angular/router';
 export const APP_ROUTES: Routes = [
   {
+    path: 'integration-metrics',
+    canActivate: [authGuard, permissionGuard],
+    data: { requiredPolicy: 'LosTresMosqueteros.Administration.IntegrationMetrics' },
+    loadComponent: () =>
+      import('./integration-metrics/integration-metrics.component').then(c => c.IntegrationMetricsComponent),
+  },
+  {
     path: 'catalog',
     canActivate: [authGuard],
     loadComponent: () => import('./catalog/catalog.component').then(c => c.CatalogComponent),

@@ -20,6 +20,7 @@ using OpenIddict.Server.AspNetCore;
 using LosTresMosqueteros.EntityFrameworkCore;
 using LosTresMosqueteros.MultiTenancy;
 using LosTresMosqueteros.HealthChecks;
+using LosTresMosqueteros.Integrations;
 using LosTresMosqueteros.Productos;
 using LosTresMosqueteros.Pantry;
 using Microsoft.OpenApi;
@@ -99,21 +100,7 @@ public class LosTresMosqueterosHttpApiHostModule : AbpModule
         var configuration = context.Services.GetConfiguration();
         var hostingEnvironment = context.Services.GetHostingEnvironment();
 
-        context.Services.AddHttpClient<IExternalProductCatalogClient, OpenFoodFactsProductCatalogClient>(client =>
-        {
-            client.BaseAddress = new Uri("https://world.openfoodfacts.org/api/v3/");
-            client.Timeout = TimeSpan.FromSeconds(15);
-            client.DefaultRequestHeaders.UserAgent.ParseAdd(
-                "LosTresMosqueteros/1.0 (https://github.com/ds-2026-grupo-21/LosTresMosqueteros)");
-        });
-
-        context.Services.AddHttpClient<IExternalProductSearchClient, SearchALiciousProductSearchClient>(client =>
-        {
-            client.BaseAddress = new Uri("https://search.openfoodfacts.org/");
-            client.Timeout = TimeSpan.FromSeconds(15);
-            client.DefaultRequestHeaders.UserAgent.ParseAdd(
-                "LosTresMosqueteros/1.0 (https://github.com/ds-2026-grupo-21/LosTresMosqueteros)");
-        });
+        ConfigureExternalCatalogClients(context.Services);
 
         if (!configuration.GetValue<bool>("App:DisablePII"))
         {
@@ -172,6 +159,37 @@ public class LosTresMosqueterosHttpApiHostModule : AbpModule
         {
             options.IsDynamicClaimsEnabled = true;
         });
+    }
+
+    /// <summary>
+    /// Registra los clientes HTTP de Open Food Facts y los envuelve con decoradores que registran
+    /// operación, duración y resultado de cada llamada (HU-05).
+    /// </summary>
+    public static void ConfigureExternalCatalogClients(IServiceCollection services)
+    {
+        services.AddHttpClient<OpenFoodFactsProductCatalogClient>(client =>
+        {
+            client.BaseAddress = new Uri("https://world.openfoodfacts.org/api/v3/");
+            client.Timeout = TimeSpan.FromSeconds(15);
+            client.DefaultRequestHeaders.UserAgent.ParseAdd(
+                "LosTresMosqueteros/1.0 (https://github.com/ds-2026-grupo-21/LosTresMosqueteros)");
+        });
+
+        services.AddHttpClient<SearchALiciousProductSearchClient>(client =>
+        {
+            client.BaseAddress = new Uri("https://search.openfoodfacts.org/");
+            client.Timeout = TimeSpan.FromSeconds(15);
+            client.DefaultRequestHeaders.UserAgent.ParseAdd(
+                "LosTresMosqueteros/1.0 (https://github.com/ds-2026-grupo-21/LosTresMosqueteros)");
+        });
+
+        services.AddTransient<IExternalProductCatalogClient>(provider => new MeteredExternalProductCatalogClient(
+            provider.GetRequiredService<OpenFoodFactsProductCatalogClient>(),
+            provider.GetRequiredService<IExternalApiCallRecorder>()));
+
+        services.AddTransient<IExternalProductSearchClient>(provider => new MeteredExternalProductSearchClient(
+            provider.GetRequiredService<SearchALiciousProductSearchClient>(),
+            provider.GetRequiredService<IExternalApiCallRecorder>()));
     }
 
     public static void ConfigureApiCookieResponses(IServiceCollection services)

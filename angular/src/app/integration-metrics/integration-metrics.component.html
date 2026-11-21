@@ -1,0 +1,90 @@
+<section class="metrics" aria-labelledby="metrics-title">
+  <h1 id="metrics-title">{{ '::Metrics:Title' | abpLocalization }}</h1>
+  <p class="text-secondary">{{ '::Metrics:Description' | abpLocalization }}</p>
+
+  <div class="period" role="group" [attr.aria-label]="'::Metrics:Period' | abpLocalization">
+    @for (option of periods; track option) {
+      <button
+        type="button"
+        class="btn btn-sm"
+        [class.btn-primary]="days() === option"
+        [class.btn-outline-primary]="days() !== option"
+        [attr.aria-pressed]="days() === option"
+        [attr.data-test]="'period-' + option"
+        (click)="selectPeriod(option)"
+      >
+        {{ periodKey(option) | abpLocalization }}
+      </button>
+    }
+  </div>
+
+  @if (state() === 'loading') {
+    <p role="status">{{ '::Metrics:Loading' | abpLocalization }}</p>
+  } @else if (state() === 'error') {
+    <div class="alert alert-warning" role="alert">
+      <p>{{ '::Metrics:Error' | abpLocalization }}</p>
+      <button type="button" class="btn btn-outline-primary" data-test="retry" (click)="load()">
+        {{ '::Metrics:Retry' | abpLocalization }}
+      </button>
+    </div>
+  } @else {
+    @if (metrics(); as data) {
+      @if (data.totalCalls === 0) {
+        <p>{{ '::Metrics:Empty' | abpLocalization }}</p>
+      } @else {
+        <p class="total">
+          {{ '::Metrics:TotalCalls' | abpLocalization }}: <strong>{{ data.totalCalls }}</strong>
+        </p>
+        <div class="operations">
+          @for (operation of data.operations; track operation.operation) {
+            <article class="card operation" [attr.data-test]="'operation-' + operation.operation">
+              <div class="card-body">
+                <h2 class="h5">{{ operationKey(operation.operation) | abpLocalization }}</h2>
+
+                @if (!hasCalls(operation)) {
+                  <p class="text-secondary mb-0">{{ '::Metrics:NoCalls' | abpLocalization }}</p>
+                } @else {
+                  @if (operation.highFailureRate) {
+                    <div class="alert alert-danger" role="alert" data-test="high-failure">
+                      {{ '::Metrics:HighFailureRate' | abpLocalization }}
+                    </div>
+                  }
+                  @if ((operation.rateLimited ?? 0) > 0) {
+                    <div class="alert alert-warning" role="alert" data-test="rate-limited">
+                      {{ '::Metrics:RateLimitWarning' | abpLocalization }}
+                    </div>
+                  }
+
+                  <dl class="figures">
+                    <div><dt>{{ '::Metrics:Total' | abpLocalization }}</dt><dd>{{ operation.totalCalls }}</dd></div>
+                    <div><dt>{{ '::Metrics:Found' | abpLocalization }}</dt><dd>{{ operation.found }}</dd></div>
+                    <div><dt>{{ '::Metrics:NotFound' | abpLocalization }}</dt><dd>{{ operation.notFound }}</dd></div>
+                    <div><dt>{{ '::Metrics:RateLimited' | abpLocalization }}</dt><dd>{{ operation.rateLimited }}</dd></div>
+                    <div><dt>{{ '::Metrics:Unavailable' | abpLocalization }}</dt><dd>{{ operation.unavailable }}</dd></div>
+                    <div><dt>{{ '::Metrics:Errors' | abpLocalization }}</dt><dd>{{ operation.errors }}</dd></div>
+                    <div>
+                      <dt>{{ '::Metrics:FailureRate' | abpLocalization }}</dt>
+                      <dd>{{ operation.failureRatePercent | number: '1.0-1' }} %</dd>
+                    </div>
+                    <div>
+                      <dt>{{ '::Metrics:AverageDuration' | abpLocalization }}</dt>
+                      <dd>{{ operation.averageDurationMs | number: '1.0-1' }} ms</dd>
+                    </div>
+                    <div>
+                      <dt>{{ '::Metrics:MaxDuration' | abpLocalization }}</dt>
+                      <dd>{{ operation.maxDurationMs }} ms</dd>
+                    </div>
+                    <div>
+                      <dt>{{ '::Metrics:LastCall' | abpLocalization }}</dt>
+                      <dd>{{ operation.lastCallAt | date: 'short' }}</dd>
+                    </div>
+                  </dl>
+                }
+              </div>
+            </article>
+          }
+        </div>
+      }
+    }
+  }
+</section>
