@@ -1,3 +1,4 @@
+using LosTresMosqueteros.Integrations;
 using LosTresMosqueteros.Pantry;
 using LosTresMosqueteros.Preferences;
 using LosTresMosqueteros.Productos;
@@ -29,6 +30,7 @@ public class LosTresMosqueterosDbContext :
     public DbSet<ExpirationWarning> ExpirationWarnings { get; set; }
     public DbSet<UserPreference> UserPreferences { get; set; }
     public DbSet<WatchedItem> WatchedItems { get; set; }
+    public DbSet<ExternalApiCall> ExternalApiCalls { get; set; }
 
     #region Entities from the modules
 
@@ -162,6 +164,20 @@ public class LosTresMosqueterosDbContext :
             }
 
             b.HasIndex(x => new { x.UserPreferenceId, x.NormalizedName }).IsUnique();
+        });
+
+        builder.Entity<ExternalApiCall>(b =>
+        {
+            b.ToTable(LosTresMosqueterosConsts.DbTablePrefix + "ExternalApiCalls", LosTresMosqueterosConsts.DbSchema);
+            b.ConfigureByConvention();
+
+            b.Property(x => x.Operation).IsRequired();
+            b.Property(x => x.Outcome).IsRequired();
+            b.Property(x => x.DurationMs).IsRequired();
+            b.Property(x => x.OccurredAt).IsRequired();
+
+            // Las métricas se consultan por período y se agrupan por operación.
+            b.HasIndex(x => new { x.OccurredAt, x.Operation });
         });
     }
 }

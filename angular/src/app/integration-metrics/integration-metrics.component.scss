@@ -1,0 +1,14 @@
+.metrics { max-width: 64rem; margin: 0 auto; padding: 1rem; }
+.metrics h1 { margin-bottom: .5rem; }
+.period { display: flex; flex-wrap: wrap; gap: .5rem; margin: 1rem 0; }
+.operations { display: grid; gap: 1rem; grid-template-columns: repeat(auto-fit, minmax(18rem, 1fr)); }
+.operation { min-width: 0; }
+.figures { display: grid; grid-template-columns: repeat(auto-fit, minmax(8rem, 1fr)); gap: .75rem; margin: 1rem 0 0; }
+.figures dt { color: var(--bs-secondary-color); font-weight: 500; }
+.figures dd { margin: .25rem 0 0; overflow-wrap: anywhere; }
+
+@media (max-width: 576px) {
+  .metrics { padding: .5rem; }
+  .operations { grid-template-columns: 1fr; }
+  .period .btn { flex: 1 1 0; }
+}

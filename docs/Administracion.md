@@ -6,7 +6,7 @@ Para administrar usuarios y roles usamos Gestión de identidad de ABP en `/ident
 
 - `LosTresMosqueteros.Administration.Products` protege el CRUD de productos internos en `/api/app/producto` y se reutiliza para el listado administrativo.
 - `LosTresMosqueteros.Administration.Audit` se usa para la consulta de auditoría.
-- `LosTresMosqueteros.Administration.IntegrationMetrics` se usa para la consulta de métricas.
+- `LosTresMosqueteros.Administration.IntegrationMetrics` protege `GET /api/app/integration-metrics` y la pantalla `/integration-metrics`. Detalle en [Métricas de integración](Metricas-de-integracion.md).
 
 Al incorporar una pantalla administrativa, aplicar el mismo permiso al endpoint, la ruta y el menú. Ejecutar DbMigrator sobre la base de desarrollo para sembrar los permisos del incremento. El rol `admin` recibe los permisos iniciales mediante ABP.
 
